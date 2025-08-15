@@ -14,17 +14,19 @@ bool Engine::Initialize(uint32_t width_, uint32_t height_, const char* title_)
 		return false;
 
 	if (!htmlViewManager.Initialize(renderer.GetD3DPtr()))
-	{
-		ErrorHandler::LogCriticalError("Failed to initialize html view manager.");
-		return false;
-	}
+    {
+        // Используем широкие строки
+        ErrorHandler::LogCriticalError(L"Failed to initialize html view manager.");
+        return false;
+    }
 
-	auto tempView = htmlViewManager.CreateView(width_, height_);
-	if (tempView == nullptr)
-	{
-		ErrorHandler::LogCriticalError("Failed to create html view.");
-		return false;
-	}
+    auto tempView = htmlViewManager.CreateView(width_, height_);
+    if (tempView == nullptr)
+    {
+        // Используем широкие строки
+        ErrorHandler::LogCriticalError(L"Failed to create html view.");
+        return false;
+    }
 	tempView->LoadURL("file:///web/example.html");
 	tempView->Focus();
 

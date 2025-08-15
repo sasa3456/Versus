@@ -1,4 +1,4 @@
-#include "D3DClass.h"
+#include "D3DClass.hpp"
 #include "../../Window/Window.hpp"
 
 bool D3DClass::Initialize(Window* window_)

@@ -1,7 +1,12 @@
+// StringHelper.cpp
 #include "StringHelper.hpp"
+#include <Windows.h>
 
-std::wstring StringHelper::StringToWide(std::string str_)
+std::wstring StringHelper::StringToWide(const std::string& str)
 {
-	std::wstring wide_string(str_.begin(), str_.end());
-	return wide_string;
+    if (str.empty()) return L"";
+    int size = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+    std::wstring result(size, 0);
+    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &result[0], size);
+    return result;
 }

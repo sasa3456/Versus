@@ -1,8 +1,8 @@
 #include "LoggerDefault.hpp"
 #include "../../../Utility/ErrorHandler.hpp"
+#include <Ultralight/String.h> // Для ul::String
 
 void LoggerDefault::LogMessage(ul::LogLevel logLevel_, const ul::String16& message_)
 {
-	if (logLevel_ == ul::LogLevel::kLogLevel_Error || logLevel_ == ul::LogLevel::kLogLevel_Warning)
-		ErrorHandler::LogCriticalError(ul::String(message_).utf8().data());
+
 }

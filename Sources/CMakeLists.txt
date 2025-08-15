@@ -7,22 +7,33 @@ set(SRC
     Kernel/Graphics/D3D/D3DClass.cpp
     Kernel/Graphics/D3D/VertexBuffer.cpp
     Kernel/Graphics/ULImpl/FileSystems/FileSystemDefault.cpp
-
-
-
-
-
-
-
-
-
+    Kernel/Graphics/ULImpl/FontLoaderAdapters/FontLoaderWin.cpp
+    Kernel/Graphics/ULImpl/FontLoaderAdapters/TextAnalysisSource.cpp
+    Kernel/Graphics/ULImpl/GPUAdapters/GPUDriverD3D11.cpp
+    Kernel/Graphics/ULImpl/GPUAdapters/GPUDriverImpl.cpp
+    Kernel/Graphics/ULImpl/LoadListeners/HtmlViewLoadListener.cpp
+    Kernel/Graphics/ULImpl/LoggerAdapters/LoggerDefault.cpp
+    Kernel/Graphics/ULImpl/ViewListeners/HtmlViewViewListener.cpp
+    Kernel/Graphics/ULImpl/HtmlView.cpp
+    Kernel/Graphics/ULImpl/HtmlViewManager.cpp
+    Kernel/Graphics/Renderer.cpp
+    Kernel/Utility/DirectoryHelper.cpp
+    Kernel/Utility/ErrorHandler.cpp
+    Kernel/Utility/MimeTypeHelper.cpp
+    Kernel/Utility/StringHelper.cpp
+    Kernel/Utility/Timer.cpp
+    Kernel/Window/Input/Keyboard.cpp
+    Kernel/Window/Input/KeyboardEvent.cpp
+    Kernel/Window/Input/Mouse.cpp
+    Kernel/Window/Input/MouseEvent.cpp
+    Kernel/Window/Window.cpp
+    Kernel/Kernel.cpp
 )
 
 source_group(" " 		   				FILES ${SRC})
 
-add_executable(Editor 
-               ${SRC})
-               _
+add_executable(Editor WIN32 ${SRC})
+               
 # ------------------------------------------------------
 # ------------------COMPILE-OPTIONS---------------------
 # ------------------------------------------------------
@@ -37,19 +48,24 @@ target_compile_options(Editor PRIVATE
 
 
 target_link_libraries(Editor PRIVATE
-    Audio
-    Aid
-    Graphics
-    Physics
+    "${CMAKE_SOURCE_DIR}/External/Ultralight/lib/Ultralight.lib"
+    "${CMAKE_SOURCE_DIR}/External/Ultralight/lib/UltralightCore.lib"
+    "${CMAKE_SOURCE_DIR}/External/Ultralight/lib/Webcore.lib"
+    d3d11.lib
+    D3DCompiler.lib
+    Dwrite.lib
+    dwmapi.lib
 )
 
 target_include_directories(Editor
-    PRIVATE "${CMAKE_SOURCE_DIR}/External/CUtils/Include"
-	PRIVATE "${CMAKE_SOURCE_DIR}/External/GLEW/Include"
-	PRIVATE "${CMAKE_SOURCE_DIR}/External/Azurite/Include"
-    PRIVATE "${CMAKE_SOURCE_DIR}/Sources/Kernel"
+    PRIVATE "${CMAKE_SOURCE_DIR}/External/Ultralight/inc"
 )
 
-set_target_properties(Editor PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/Editor"
+# Копирование всего содержимого CacheFiles в выходной каталог
+add_custom_command(TARGET Editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/External/CacheFiles"
+        "$<TARGET_FILE_DIR:Editor>"
+    COMMENT "Copying CacheFiles to output directory"
+    VERBATIM
 )

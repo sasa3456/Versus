@@ -85,7 +85,7 @@ bool Window::Initialize(uint16_t width_, uint16_t height_, const char* title_, i
 	);
 
 	//Show/focus Window
-	ShowWindow(hwnd, SW_SHOW);
+	ShowWindow(hwnd, SW_MAXIMIZE);
 	SetForegroundWindow(hwnd);
 	SetFocus(hwnd);
 
