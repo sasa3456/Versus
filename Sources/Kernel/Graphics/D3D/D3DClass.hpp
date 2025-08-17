@@ -1,29 +1,46 @@
-#pragma once
-#include "../../../Editor/pch.hpp"
+// Copyright (c) 2025 Alexander Starov
+// MIT License
 
-class Window;
-class D3DClass
+#ifndef D3DCLASS_HPP
+#define D3DCLASS_HPP
+
+#include "../../Utility/ErrorHandler.hpp"
+
+#include <Windows.h>
+#include <d3d11.h>
+#include <d3dcompiler.h>
+
+namespace VE_Kernel
 {
-public:
-	bool Initialize(Window* window);
-	Microsoft::WRL::ComPtr<ID3D11Device> device;
-	Microsoft::WRL::ComPtr<ID3D11DeviceContext> deviceContext;
-	Microsoft::WRL::ComPtr<IDXGISwapChain> swapchain;
-	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> renderTargetView;
-	Microsoft::WRL::ComPtr<ID3D11Texture2D> depthStencilBuffer;
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depthStencilView;
-	Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depthStencilState;
-	Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizerState;
-	Microsoft::WRL::ComPtr<ID3D11SamplerState> samplerState;
+    class Window;
+    class D3DClass
+    {
+    public:
+        bool Initialize(Window* window_a);
 
-private:
-	bool InitializeDeviceAndSwapchain();
-	bool InitializeRenderTarget();
-	bool InitializeDepthStencilBufferAndState();
-	bool InitializeRasterizerState();
-	bool InitializeSamplerState();
+    public:
+        Microsoft::WRL::ComPtr<ID3D11Device> device_;
+        Microsoft::WRL::ComPtr<ID3D11DeviceContext> device_context_;
+        Microsoft::WRL::ComPtr<IDXGISwapChain> swapchain_;
+        Microsoft::WRL::ComPtr<ID3D11RenderTargetView> render_target_view_;
+        Microsoft::WRL::ComPtr<ID3D11Texture2D> depth_stencil_buffer_;
+        Microsoft::WRL::ComPtr<ID3D11DepthStencilView> depth_stencil_view_;
+        Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depth_stencil_state_;
+        Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizer_state_;
+        Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler_state_;
 
-	HWND hwnd = NULL;
-	uint16_t width = 0;
-	uint16_t height = 0;
-};
+    private:
+        bool _InitializeDeviceAndSwapchain();
+        bool _InitializeRenderTarget();
+        bool _InitializeDepthStencilBufferAndState();
+        bool _InitializeRasterizerState();
+        bool _InitializeSamplerState();
+
+    private:
+        HWND hwnd_ = NULL;
+        uint16_t width_ = 0;
+        uint16_t height_ = 0;
+    };
+} // namespace VE_Kernel
+
+#endif

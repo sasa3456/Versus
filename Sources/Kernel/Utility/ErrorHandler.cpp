@@ -1,36 +1,49 @@
 #include "ErrorHandler.hpp"
 #include <comdef.h>
 
-void ErrorHandler::LogCriticalError(const std::wstring& msg_)
+namespace VE_Kernel
 {
-    MessageBoxW(NULL, msg_.c_str(), L"Critical Error", 0);
-}
+    void ErrorHandler::LogCriticalError(const std::wstring& msg_a)
+    {
+        MessageBoxW(NULL, msg_a.c_str(), L"Critical Error", 0);
+    }
 
-void ErrorHandler::LogCriticalError(HRESULT hr_, const std::wstring& msg_, const std::string& file_, const std::string& function_, int line_)
-{
+    void ErrorHandler::LogCriticalError(HRESULT hr_a,
+                                        const std::wstring& msg_a,
+                                        const std::string& file_a,
+                                        const std::string& function_a,
+                                        int line_a)
+    {}
 
-}
+    void ErrorHandler::LogFatalError(HRESULT hr_a,
+                                     const std::wstring& msg_a,
+                                     const std::string& file_a,
+                                     const std::string& function_a,
+                                     int line_a)
+    {}
 
-void ErrorHandler::LogFatalError(HRESULT hr_, const std::wstring& msg_, const std::string& file_, const std::string& function_, int line_)
-{
-  
-}
+    void ErrorHandler::LogFatalError(const std::wstring& msg_a,
+                                     const std::string& file_a,
+                                     const std::string& function_a,
+                                     int line_a)
+    {
+        std::wstring error_message_ = L"FATAL ERROR: ";
+        error_message_ += msg_a;
+        error_message_ += L"\n";
 
-void ErrorHandler::LogFatalError(const std::wstring& msg_, const std::string& file_, const std::string& function_, int line_)
-{
-    std::wstring errorMessage = L"FATAL ERROR: ";
-    errorMessage += msg_;
-    errorMessage += L"\n";
+        std::wstring error_location_ = L"\n\nFile: ";
+        error_location_ += StringHelper::StringToWide(file_a);
+        error_location_ += L"\nFunction: ";
+        error_location_ += StringHelper::StringToWide(function_a);
+        error_location_ += L"\nLine: ";
+        error_location_ += std::to_wstring(line_a);
 
-    std::wstring errorLocation = L"\n\nFile: ";
-    errorLocation += StringHelper::StringToWide(file_);
-    errorLocation += L"\nFunction: ";
-    errorLocation += StringHelper::StringToWide(function_);
-    errorLocation += L"\nLine: ";
-    errorLocation += std::to_wstring(line_);
+        error_message_ += error_location_;
 
-    errorMessage += errorLocation;
-
-    MessageBoxW(NULL, errorMessage.c_str(), L"Fatal Error", 0); // Используем MessageBoxW
-    exit(-1);
-}
+        MessageBoxW(NULL,
+                    error_message_.c_str(),
+                    L"Fatal Error",
+                    0);
+        exit(-1);
+    }
+} // namespace VE_Kernel

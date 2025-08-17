@@ -1,80 +1,90 @@
-//Note: I didn't edit any of this code - Jacob Preston
-#pragma once
+// Copyright (c) 2025 Alexander Starov
+// MIT License
+
+#ifndef TEXTANALYSISSOURCE_HPP
+#define TEXTANALYSISSOURCE_HPP
+
 #include <dwrite_3.h>
 
-class TextAnalysisSource
-    : public IDWriteTextAnalysisSource
+namespace VE_Kernel
 {
-public:
-    // IUnknown interface
-    IFACEMETHOD(QueryInterface)(IID const& iid, OUT void** ppObject)
+    class TextAnalysisSource : public IDWriteTextAnalysisSource
     {
-        if (iid == __uuidof(IDWriteTextAnalysisSource)) {
-            *ppObject = static_cast<IDWriteTextAnalysisSource*>(this);
-            return S_OK;
+    public:
+        IFACEMETHOD(QueryInterface)(IID const& iid_a, OUT void** pp_object_a)
+        {
+            if (iid_a == __uuidof(IDWriteTextAnalysisSource))
+            {
+                *pp_object_a = static_cast<IDWriteTextAnalysisSource*>(this);
+                return S_OK;
+            } 
+            else if (iid_a == __uuidof(IUnknown))
+            {
+                *pp_object_a = static_cast<IUnknown*>(
+                        static_cast<IDWriteTextAnalysisSource*>(this));
+              
+                return S_OK;
+            } 
+            else
+            {
+                return E_NOINTERFACE;
+            }
         }
-        else if (iid == __uuidof(IUnknown)) {
-            *ppObject =
-                static_cast<IUnknown*>(static_cast<IDWriteTextAnalysisSource*>(this));
-            return S_OK;
+
+        IFACEMETHOD_(ULONG, AddRef)()
+        {
+            return InterlockedIncrement(&ref_value_);
         }
-        else {
-            return E_NOINTERFACE;
+
+        IFACEMETHOD_(ULONG, Release)()
+        {
+            ULONG new_count_ = InterlockedDecrement(&ref_value_);
+            if (new_count_ == 0)
+                delete this;
+
+            return new_count_;
         }
-    }
 
-    IFACEMETHOD_(ULONG, AddRef)()
-    {
-        return InterlockedIncrement(&mRefValue);
-    }
+    public:
+        TextAnalysisSource(const wchar_t* text_a,
+                           UINT32 text_length_a,
+                           const wchar_t* locale_name_a,
+                           DWRITE_READING_DIRECTION reading_direction_a);
 
-    IFACEMETHOD_(ULONG, Release)()
-    {
-        ULONG newCount = InterlockedDecrement(&mRefValue);
-        if (newCount == 0)
-            delete this;
+        ~TextAnalysisSource();
 
-        return newCount;
-    }
+        IFACEMETHODIMP GetTextAtPosition(UINT32 text_position_a,
+                                         OUT WCHAR const** text_string_a,
+                                         OUT UINT32* text_length_a);
 
-public:
-    TextAnalysisSource(const wchar_t* text,
-        UINT32 textLength,
-        const wchar_t* localeName,
-        DWRITE_READING_DIRECTION readingDirection);
+        IFACEMETHODIMP GetTextBeforePosition(UINT32 text_position_a,
+                                             OUT WCHAR const** text_string_a,
+                                             OUT UINT32* text_length_a);
 
-    ~TextAnalysisSource();
-
-    // IDWriteTextAnalysisSource implementation
-    IFACEMETHODIMP GetTextAtPosition(UINT32 textPosition,
-        OUT WCHAR const** textString,
-        OUT UINT32* textLength);
-
-    IFACEMETHODIMP GetTextBeforePosition(UINT32 textPosition,
-        OUT WCHAR const** textString,
-        OUT UINT32* textLength);
-
-    IFACEMETHODIMP_(DWRITE_READING_DIRECTION)
+        IFACEMETHODIMP_(DWRITE_READING_DIRECTION)
         GetParagraphReadingDirection() throw();
 
-    IFACEMETHODIMP GetLocaleName(UINT32 textPosition,
-        OUT UINT32* textLength,
-        OUT WCHAR const** localeName);
+        IFACEMETHODIMP GetLocaleName(UINT32 text_position_a,
+                                     OUT UINT32* text_length_a,
+                                     OUT WCHAR const** locale_name_a);
 
-    IFACEMETHODIMP
-        GetNumberSubstitution(UINT32 textPosition,
-            OUT UINT32* textLength,
-            OUT IDWriteNumberSubstitution** numberSubstitution);
+        IFACEMETHODIMP
+        GetNumberSubstitution(
+                UINT32 text_position_a,
+                OUT UINT32* text_length_a,
+                OUT IDWriteNumberSubstitution** number_substitution_a);
 
-protected:
-    UINT32 mTextLength;
-    const wchar_t* mText;
-    const wchar_t* mLocaleName;
-    DWRITE_READING_DIRECTION mReadingDirection;
-    ULONG mRefValue;
+    protected:
+        UINT32 text_length_;
+        const wchar_t* text_;
+        const wchar_t* locale_name_;
+        DWRITE_READING_DIRECTION reading_direction_;
+        ULONG ref_value_;
 
-private:
-    // No copy construction allowed.
-    TextAnalysisSource(const TextAnalysisSource& b) = delete;
-    TextAnalysisSource& operator=(TextAnalysisSource const&) = delete;
-};
+    private:
+        TextAnalysisSource(const TextAnalysisSource& b_a) = delete;
+        TextAnalysisSource& operator=(TextAnalysisSource const&) = delete;
+    };
+} // namespace VE_Kernel
+
+#endif

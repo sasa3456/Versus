@@ -1,35 +1,52 @@
 #include "VertexShader.hpp"
 
-HRESULT VertexShader::Initialize(ID3D11Device* pDevice_, std::wstring shaderpath_, std::vector<D3D11_INPUT_ELEMENT_DESC> layoutDesc_)
+namespace VE_Kernel
 {
-	std::wstring filePath = DirectoryHelper::GetExecutableDirectory() + shaderpath_;
+    HRESULT VertexShader::Initialize(
+            ID3D11Device* device_a,
+            std::wstring shader_path_a,
+            std::vector<D3D11_INPUT_ELEMENT_DESC> layout_desc_a)
+    {
+        std::wstring file_path_ = DirectoryHelper::GetExecutableDirectory()
+                                + shader_path_a;
 
-	HRESULT hr = D3DReadFileToBlob(filePath.c_str(), shader_buffer.GetAddressOf());
-	if (FAILED(hr))
-		return hr;
+        HRESULT hr_ = D3DReadFileToBlob(file_path_.c_str(),
+                                        shader_buffer_.GetAddressOf());
+        if (FAILED(hr_))
+            return hr_;
 
-	hr = pDevice_->CreateVertexShader(shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), NULL, &shader);
-	if (FAILED(hr))
-		return hr;
+        hr_ = device_a->CreateVertexShader(shader_buffer_->GetBufferPointer(),
+                                           shader_buffer_->GetBufferSize(),
+                                           NULL,
+                                           &shader_);
+        
+        if (FAILED(hr_))
+            return hr_;
 
-	hr = pDevice_->CreateInputLayout(layoutDesc_.data(), layoutDesc_.size(), shader_buffer->GetBufferPointer(), shader_buffer->GetBufferSize(), &inputLayout);
-	if (FAILED(hr))
-		return hr;
+        hr_ = device_a->CreateInputLayout(layout_desc_a.data(),
+                                          layout_desc_a.size(),
+                                          shader_buffer_->GetBufferPointer(),
+                                          shader_buffer_->GetBufferSize(),
+                                          &input_layout_);
+        
+        if (FAILED(hr_))
+            return hr_;
 
-	return hr;
-}
+        return hr_;
+    }
 
-ID3D11VertexShader* VertexShader::GetShader()
-{
-	return shader.Get();
-}
+    ID3D11VertexShader* VertexShader::GetShader()
+    {
+        return shader_.Get();
+    }
 
-ID3D10Blob* VertexShader::GetBuffer()
-{
-	return shader_buffer.Get();
-}
+    ID3D10Blob* VertexShader::GetBuffer()
+    {
+        return shader_buffer_.Get();
+    }
 
-ID3D11InputLayout* VertexShader::GetInputLayout()
-{
-	return inputLayout.Get();
-}
+    ID3D11InputLayout* VertexShader::GetInputLayout()
+    {
+        return input_layout_.Get();
+    }
+} // namespace VE_Kernel

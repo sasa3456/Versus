@@ -1,239 +1,305 @@
 #include "Window.hpp"
 
-bool Window::Initialize(uint16_t width_, uint16_t height_, const char* title_, int xPos_, int yPos_)
+namespace
 {
-	//Assign variables based off incoming parms
-	width = width_;
-	height = height_;
-	title = title_;
+    inline int TitleH()
+    {
+        int h_ = GetSystemMetrics(SM_CYCAPTION);
+        return (h_ < 28) ? 28 : h_;
+    }
 
-	int xPos = xPos_;
-	int yPos = yPos_;
-	//Determine window x/y position
-	if (xPos == INT_MAX) //if no xpos entered, set to center of screen
-	{
-		int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-		int halfScreenWidth = screenWidth / 2;
-		int halfWindowWidth = width / 2;
-		int centerScreenX = halfScreenWidth - halfWindowWidth;
-		xPos = centerScreenX;
-	}
+    inline int FrameThickness()
+    {
+        return GetSystemMetrics(SM_CXFRAME)
+               + GetSystemMetrics(SM_CXPADDEDBORDER);
+    }
 
-	if (yPos == INT_MAX) //if no ypos entered, set to center of screen
-	{
-		int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-		int halfScreenHeight = screenHeight / 2;
-		int halfWindowHeight = height / 2;
-		int centerScreenY = halfScreenHeight - halfWindowHeight;
-		yPos = centerScreenY;
-	}
-	//Determine Window Rect
-	RECT wr; //Window Rectangle
-	wr.left = xPos;
-	wr.top = yPos;
-	wr.right = wr.left + width;
-	wr.bottom = wr.top + height;
+    inline void ComputeToolbarRects(HWND hwnd_a,
+                                    RECT& rc_toolbar_a,
+                                    RECT& rc_min_a,
+                                    RECT& rc_max_a,
+                                    RECT& rc_close_a)
+    {
+        RECT rc_client_ {};
+        GetClientRect(hwnd_a, &rc_client_);
+        const int w_ = rc_client_.right - rc_client_.left;
+        const int h_ = TitleH();
+        rc_toolbar_a = {0, 0, w_, h_};
 
-	DWORD windowStyle = WS_OVERLAPPEDWINDOW;
-	BOOL result = AdjustWindowRect(&wr, windowStyle, FALSE);
-	if (result == 0) //If adjustwindowrect fails...
-		return false;
+        const int btn_w_ = GetSystemMetrics(SM_CXSIZE);
+        const int btn_h_ = h_;
 
-	//Register Window Class
-	RegisterWindowClass();
-	//Create Window
-	hwnd = CreateWindowExA(
-		0,
-		windowClass,
-		title.c_str(),
-		WS_OVERLAPPEDWINDOW, // Стандартный стиль с кнопками управления
-		wr.left,
-		wr.top,
-		wr.right - wr.left,
-		wr.bottom - wr.top,
-		NULL,
-		NULL,
-		GetModuleHandle(NULL),
-		this
-	);
+        rc_close_a = {w_ - btn_w_, 0, w_, btn_h_};
+        rc_max_a = {w_ - 2 * btn_w_, 0, w_ - btn_w_, btn_h_};
+        rc_min_a = {w_ - 3 * btn_w_, 0, w_ - 2 * btn_w_, btn_h_};
+    }
 
-	if (hwnd == NULL)
-	{
-		DWORD error = GetLastError();
-		return false;
-	}
+    inline bool PtIn(const RECT& r_a, int x_a, int y_a)
+    {
+        return x_a >= r_a.left && x_a < r_a.right && y_a >= r_a.top && y_a < r_a.bottom;
+    }
 
-	// Включение темной темы для заголовка
-	BOOL darkMode = TRUE;
-	::DwmSetWindowAttribute(
-		hwnd,
-		20, // DWMWA_USE_IMMERSIVE_DARK_MODE
-		&darkMode,
-		sizeof(darkMode)
-	);
+    inline void DrawCaptionButtons(HDC hdc_a,
+                                   const RECT& r_min_a,
+                                   const RECT& r_max_a,
+                                   const RECT& r_close_a,
+                                   HWND hwnd_a)
+    {
+        DrawFrameControl(hdc_a,
+                         const_cast<RECT*>(&r_min_a),
+                         DFC_CAPTION,
+                         DFCS_CAPTIONMIN);
+        
+		UINT max_flag_ = IsZoomed(hwnd_a) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
+        DrawFrameControl(hdc_a, const_cast<RECT*>(&r_max_a), DFC_CAPTION, max_flag_);
+        DrawFrameControl(hdc_a,
+                         const_cast<RECT*>(&r_close_a),
+                         DFC_CAPTION,
+                         DFCS_CAPTIONCLOSE);
+    }
 
-	// Убираем иконку из заголовка
-	LONG_PTR extendedStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
-	SetWindowLongPtr(hwnd, GWL_EXSTYLE, extendedStyle | WS_EX_DLGMODALFRAME);
+} // namespace
 
-	// Перерисовываем заголовок
-	SetWindowPos(
-		hwnd,
-		NULL,
-		0, 0, 0, 0,
-		SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED
-	);
-
-	//Show/focus Window
-	ShowWindow(hwnd, SW_MAXIMIZE);
-	SetForegroundWindow(hwnd);
-	SetFocus(hwnd);
-
-	return true;
-}
-
-bool Window::ProcessMessages()
+namespace VE_Kernel
 {
-	// Handle the windows messages.
-	MSG msg;
-	ZeroMemory(&msg, sizeof(MSG)); // Initialize the message structure.
+    bool Window::Initialize(uint16_t width_a,
+                            uint16_t height_a,
+                            const char* title_a,
+                            int x_pos_a,
+                            int y_pos_a)
+    {
+        width_ = width_a;
+        height_ = height_a;
+        title_ = title_a;
+        int x_pos_ = x_pos_a, y_pos_ = y_pos_a;
 
-	while (PeekMessage(&msg, //Where to store message (if one exists) See: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644943(v=vs.85).aspx
-		hwnd, //Handle to window we are checking messages for
-		0,    //Minimum Filter Msg Value - We are not filtering for specific messages, but the min/max could be used to filter only mouse messages for example.
-		0,    //Maximum Filter Msg Value
-		PM_REMOVE))//Remove message after capturing it via PeekMessage. For more argument options, see: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644943(v=vs.85).aspx
-	{
-		TranslateMessage(&msg); //Translate message from virtual key messages into character messages so we can dispatch the message. See: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644955(v=vs.85).aspx
-		DispatchMessage(&msg); //Dispatch message to our Window Proc for this window. See: https://msdn.microsoft.com/en-us/library/windows/desktop/ms644934(v=vs.85).aspx
-	}
+        if (x_pos_ == INT_MAX)
+        {
+            int sw_ = GetSystemMetrics(SM_CXSCREEN);
+            x_pos_ = (sw_ - width_) / 2;
+        }
 
-	// Check if the window was closed
-	if (msg.message == WM_NULL)
-	{
-		if (!IsWindow(hwnd))
-		{
-			hwnd = NULL; //Message processing loop takes care of destroying this window
-			UnregisterClassA(windowClass, GetModuleHandle(NULL));
-			return false;
-		}
-	}
+        if (y_pos_ == INT_MAX)
+        {
+            int sh = GetSystemMetrics(SM_CYSCREEN);
+            y_pos_ = (sh - height_) / 2;
+        }
 
-	return true;
-}
+        RECT wr_ {x_pos_, y_pos_, x_pos_ + (LONG)width_, y_pos_ + (LONG)height_};
 
-LRESULT Window::WindowProcA(HWND hwnd_, UINT uMsg_, WPARAM wParam_, LPARAM lParam_)
-{
-	switch (uMsg_)
-	{
-		//Mouse Messages
-		case WM_MOUSEMOVE:
-			mouse.OnWindowsMouseMessage(uMsg_, wParam_, lParam_);
-			return 0;
-		case WM_LBUTTONDOWN:
-		case WM_RBUTTONDOWN:
-		case WM_MBUTTONDOWN:
-			mouse.OnWindowsMouseMessage(uMsg_, wParam_, lParam_);
-			SetCapture(hwnd);
-			return 0;
-		case WM_LBUTTONUP:
-		case WM_RBUTTONUP:
-		case WM_MBUTTONUP:
-			mouse.OnWindowsMouseMessage(uMsg_, wParam_, lParam_);
-			ReleaseCapture();
-			return 0;
-		//Keyboard Messages
-		case WM_KEYDOWN:
-		case WM_KEYUP:
-		case WM_SYSKEYDOWN:
-		case WM_SYSKEYUP:
-		case WM_CHAR:
-			keyboard.OnWindowsKeyboardMessage(uMsg_, wParam_, lParam_);
-			return 0;
-		default:
-			return DefWindowProcA(hwnd_, uMsg_, wParam_, lParam_);
-	}
-}
+        DWORD style_ = (WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU));
+        DWORD ex_style_ = WS_EX_APPWINDOW;
 
-Mouse& Window::GetMouse()
-{
-	return mouse;
-}
+        if (!AdjustWindowRect(&wr_, style_, FALSE))
+            return false;
 
-Keyboard& Window::GetKeyboard()
-{
-	return keyboard;
-}
+        _RegisterWindowClass();
 
-HWND Window::GetHWND() const
-{
-	return hwnd;
-}
+        hwnd_ = CreateWindowExA(ex_style_,
+                                window_class_,
+                                title_.c_str(),
+                                style_,
+                                wr_.left,
+                                wr_.top,
+                                wr_.right - wr_.left,
+                                wr_.bottom - wr_.top,
+                                NULL,
+                                NULL,
+                                GetModuleHandle(NULL),
+                                this);
+        if (!hwnd_)
+            return false;
 
-uint16_t Window::GetWidth() const
-{
-	return width;
-}
+        HICON h_main_icon_ = static_cast<HICON>(
+                LoadImageA(GetModuleHandle(NULL),
+                           "IDI_MAIN_ICON",
+                           IMAGE_ICON,
+                           GetSystemMetrics(SM_CXICON),
+                           GetSystemMetrics(SM_CYICON),
+                           LR_SHARED));
+        if (h_main_icon_)
+        {
+            SendMessage(hwnd_,
+                        WM_SETICON,
+                        ICON_BIG,
+                        reinterpret_cast<LPARAM>(h_main_icon_));
+        }
 
-uint16_t Window::GetHeight() const
-{
-	return height;
-}
+        BOOL dark_mode_ = TRUE;
+        ::DwmSetWindowAttribute(hwnd_,
+                                20,
+                                &dark_mode_,
+                                sizeof(dark_mode_));
 
-LRESULT CALLBACK HandleMsgRedirect(HWND hwnd_, UINT uMsg_, WPARAM wParam_, LPARAM lParam_)
-{
-	switch (uMsg_)
-	{
-		// All other messages
-	case WM_CLOSE:
-		DestroyWindow(hwnd_);
-		return 0;
+        ShowWindow(hwnd_, SW_MAXIMIZE);
+        SetForegroundWindow(hwnd_);
+        SetFocus(hwnd_);
+        return true;
+    }
 
-	default:
-	{
-		// retrieve ptr to window class
-		Window* const pWindow = reinterpret_cast<Window*>(GetWindowLongPtr(hwnd_, GWLP_USERDATA));
-		// forward message to window class handler
-		return pWindow->WindowProcA(hwnd_, uMsg_, wParam_, lParam_);
-	}
-	}
-}
+    bool Window::ProcessMessages()
+    {
+        MSG msg_;
+        ZeroMemory(&msg_, sizeof(MSG)); 
 
-LRESULT CALLBACK HandleMessageSetup(HWND hwnd_, UINT uMsg_, WPARAM wParam_, LPARAM lParam_)
-{
-	switch (uMsg_)
-	{
-	case WM_NCCREATE:
-	{
-		const CREATESTRUCTW* const pCreate = reinterpret_cast<CREATESTRUCTW*>(lParam_);
-		Window* pWindow = reinterpret_cast<Window*>(pCreate->lpCreateParams);
-		if (pWindow == nullptr) //Sanity check
-		{
-			exit(-1);
-		}
-		SetWindowLongPtr(hwnd_, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pWindow));
-		SetWindowLongPtr(hwnd_, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(HandleMsgRedirect));
-		return pWindow->WindowProcA(hwnd_, uMsg_, wParam_, lParam_);
-	}
-	default:
-		return DefWindowProcA(hwnd_, uMsg_, wParam_, lParam_);
-	}
-}
+        while (PeekMessage(
+                &msg_, 
+                hwnd_,
+                0,  
+                0,  
+                PM_REMOVE))
+        {
+            TranslateMessage(&msg_);
+            DispatchMessage(&msg_);
+        }
 
-void Window::RegisterWindowClass()
-{
-	WNDCLASSEXA wc = {}; //Our Window Class (This has to be filled before our window can be created) See: https://msdn.microsoft.com/en-us/library/windows/desktop/ms633577(v=vs.85).aspx
-	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC; //Flags [Redraw on width/height change from resize/movement] See: https://msdn.microsoft.com/en-us/library/windows/desktop/ff729176(v=vs.85).aspx
-	wc.lpfnWndProc = HandleMessageSetup; //Pointer to Window Proc function for handling messages from this window
-	wc.cbClsExtra = 0; //# of extra bytes to allocate following the window-class structure. We are not currently using this.
-	wc.cbWndExtra = 0; //# of extra bytes to allocate following the window instance. We are not currently using this.
-	wc.hInstance = GetModuleHandle(NULL); //Handle to the instance that contains the Window Procedure
-	wc.hIcon = NULL;   //Handle to the class icon. Must be a handle to an icon resource. We are not currently assigning an icon, so this is null.
-	wc.hIconSm = NULL; //Handle to small icon for this class. We are not currently assigning an icon, so this is null.
-	wc.hCursor = LoadCursor(NULL, IDC_ARROW); //Default Cursor - If we leave this null, we have to explicitly set the cursor's shape each time it enters the window.
-	wc.hbrBackground = NULL; //Handle to the class background brush for the window's background color - we will leave this blank for now and later set this to black. For stock brushes, see: https://msdn.microsoft.com/en-us/library/windows/desktop/dd144925(v=vs.85).aspx
-	wc.lpszMenuName = NULL; //Pointer to a null terminated character string for the menu. We are not using a menu yet, so this will be NULL.
-	wc.lpszClassName = windowClass; //Pointer to null terminated string of our class name for this window.
-	wc.cbSize = sizeof(WNDCLASSEXA); //Need to fill in the size of our struct for cbSize
-	RegisterClassExA(&wc); // Register the class so that it is usable.
-}
+        if (msg_.message == WM_NULL)
+        {
+            if (!IsWindow(hwnd_))
+            {
+                hwnd_ = NULL; 
+                UnregisterClassA(window_class_, GetModuleHandle(NULL));
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    LRESULT Window::WindowProcA(HWND hwnd_a,
+                                UINT u_msg_a,
+                                WPARAM w_param_a,
+                                LPARAM l_param_a)
+    {
+        switch (u_msg_a)
+        {
+        case WM_MOUSEMOVE:
+            mouse_._OnWindowsMouseMessage(u_msg_a, w_param_a, l_param_a);
+            return 0;
+        case WM_LBUTTONDOWN:
+        case WM_RBUTTONDOWN:
+        case WM_MBUTTONDOWN:
+            mouse_._OnWindowsMouseMessage(u_msg_a, w_param_a, l_param_a);
+            SetCapture(hwnd_);
+            return 0;
+        case WM_LBUTTONUP:
+        case WM_RBUTTONUP:
+        case WM_MBUTTONUP:
+            mouse_._OnWindowsMouseMessage(u_msg_a, w_param_a, l_param_a);
+            ReleaseCapture();
+            return 0;
+        case WM_KEYDOWN:
+        case WM_KEYUP:
+        case WM_SYSKEYDOWN:
+        case WM_SYSKEYUP:
+        case WM_CHAR:
+            keyboard_._OnWindowsKeyboardMessage(u_msg_a, w_param_a, l_param_a);
+            return 0;
+        default:
+            return DefWindowProcA(hwnd_a, u_msg_a, w_param_a, l_param_a);
+        }
+    }
+
+    Mouse& Window::GetMouse()
+    {
+        return mouse_;
+    }
+
+    Keyboard& Window::GetKeyboard()
+    {
+        return keyboard_;
+    }
+
+    HWND Window::GetHWND() const
+    {
+        return hwnd_;
+    }
+
+    uint16_t Window::GetWidth() const
+    {
+        return width_;
+    }
+
+    uint16_t Window::GetHeight() const
+    {
+        return height_;
+    }
+
+    LRESULT CALLBACK HandleMsgRedirect(HWND hwnd_a,
+                                       UINT u_msg_a,
+                                       WPARAM w_param_a,
+                                       LPARAM l_param_a)
+    {
+        switch (u_msg_a)
+        {
+        case WM_CLOSE:
+            DestroyWindow(hwnd_a);
+            return 0;
+
+        default: 
+        {
+            Window* const window_ = reinterpret_cast<Window*>(
+                    GetWindowLongPtr(hwnd_a, GWLP_USERDATA));
+           
+            return window_->WindowProcA(hwnd_a, u_msg_a, w_param_a, l_param_a);
+        }
+        }
+    }
+
+    LRESULT CALLBACK HandleMessageSetup(HWND hwnd_a,
+                                        UINT u_msg_a,
+                                        WPARAM w_param_a,
+                                        LPARAM l_param_a)
+    {
+        switch (u_msg_a)
+        {
+        case WM_NCCREATE: {
+            const CREATESTRUCTW* const create_ =
+                    reinterpret_cast<CREATESTRUCTW*>(l_param_a);
+            
+            Window* window_ = reinterpret_cast<Window*>(
+                    create_->lpCreateParams);
+            if (window_ == nullptr)
+            {
+                exit(-1);
+            }
+
+            SetWindowLongPtr(hwnd_a,
+                             GWLP_USERDATA,
+                             reinterpret_cast<LONG_PTR>(window_));
+            
+            SetWindowLongPtr(hwnd_a,
+                             GWLP_WNDPROC,
+                             reinterpret_cast<LONG_PTR>(HandleMsgRedirect));
+            
+            return window_->WindowProcA(hwnd_a, u_msg_a, w_param_a, l_param_a);
+        }
+        default:
+            return DefWindowProcA(hwnd_a, u_msg_a, w_param_a, l_param_a);
+        }
+    }
+
+    void Window::_RegisterWindowClass()
+    {
+        WNDCLASSEXA wc_ = {};
+        wc_.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+        wc_.lpfnWndProc = HandleMessageSetup;
+        wc_.cbClsExtra = 0; 
+        wc_.cbWndExtra = 0; 
+        wc_.hInstance = GetModuleHandle(NULL); 
+        wc_.hIcon = static_cast<HICON>(LoadImageA(GetModuleHandle(NULL),
+                                                 "IDI_MAIN_ICON",
+                                                 IMAGE_ICON,
+                                                 0,
+                                                 0,
+                                                 LR_DEFAULTSIZE | LR_SHARED));
+
+        wc_.hIconSm = NULL;
+        wc_.hCursor = LoadCursor(NULL, IDC_ARROW);
+        wc_.hbrBackground = NULL; 
+        wc_.lpszMenuName  = NULL; 
+        wc_.lpszClassName = window_class_;
+        wc_.cbSize = sizeof(WNDCLASSEXA);
+        RegisterClassExA(&wc_);
+    }
+} // namespace VE_Kernel

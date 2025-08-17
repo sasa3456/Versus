@@ -1,20 +1,35 @@
-#pragma once
+// Copyright (c) 2025 Alexander Starov
+// MIT License
+
+#ifndef MOUSE_HPP
+#define MOUSE_HPP
+
 #include "MouseEvent.hpp"
 
-class Mouse
+namespace VE_Kernel
 {
-	friend class Window;
-public:
-	int GetPosX();
-	int GetPosY();
-	MousePoint GetPos();
-	bool EventBufferIsEmpty();
-	MouseEvent ReadEvent();
-private:
-	void OnWindowsMouseMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
-	MouseEvent::Button lastPressedButton = MouseEvent::Button::None;
+    class Mouse
+    {
+        friend class Window;
 
-	std::queue<MouseEvent> eventBuffer;
-	int x = 0;
-	int y = 0;
-};
+    public:
+        int GetPosX();
+        int GetPosY();
+        MousePoint GetPos();
+        bool EventBufferIsEmpty();
+        MouseEvent ReadEvent();
+
+    private:
+        void _OnWindowsMouseMessage(
+                UINT u_msg_a, WPARAM w_param_a, LPARAM l_param_a);
+
+    private:
+        MouseEvent::Button last_pressed_button_ = MouseEvent::Button::None;
+        std::queue<MouseEvent> event_buffer_;
+
+        int x_ = 0;
+        int y_ = 0;
+    };
+} // namespace VE_Kernel
+
+#endif

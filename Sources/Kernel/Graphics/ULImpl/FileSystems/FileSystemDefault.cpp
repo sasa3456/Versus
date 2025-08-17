@@ -1,88 +1,110 @@
 #include "FileSystemDefault.hpp"
-#include "../../../Utility/MimeTypeHelper.hpp"
+
 #include "../../../Utility/DirectoryHelper.hpp"
+#include "../../../Utility/MimeTypeHelper.hpp"
+
 #include <Ultralight\String.h>
 
-FileSystemDefault::FileSystemDefault(std::string baseDirectory_)
+namespace VE_Kernel
 {
-	if (baseDirectory_ != "")
-	{
-		baseDirectory = baseDirectory_;
-	}
-	else
-	{
-		baseDirectory = DirectoryHelper::GetExecutableDirectoryA();
-	}
-}
+    FileSystemDefault::FileSystemDefault(std::string base_directory_a)
+    {
+        if (base_directory_a != "")
+        {
+            base_directory_ = base_directory_a;
+        } 
+        else
+        {
+            base_directory_ = DirectoryHelper::GetExecutableDirectoryA();
+        }
+    }
 
-FileSystemDefault::~FileSystemDefault()
-{
-}
+    FileSystemDefault::~FileSystemDefault() {}
 
-bool FileSystemDefault::FileExists(const ul::String16& path_)
-{
-	std::string fullpath = GetRelativePath(path_);
-	std::ifstream filestream(fullpath);
-	return filestream.good();
-}
+    bool FileSystemDefault::FileExists(const ul::String16& path_a)
+    {
+        std::string fullpath_ = _GetRelativePath(path_a);
+        std::ifstream filestream_(fullpath_);
+        
+        return filestream_.good();
+    }
 
-bool FileSystemDefault::GetFileSize(ul::FileHandle handle_, int64_t& result_)
-{
-	auto iter = openFiles.find(handle_);
-	if (iter != openFiles.end())
-	{
-		auto& file = iter->second;
-		file->seekg(0, file->end);
-		result_ = (int64_t)file->tellg();
-		return true;
-	}
-	return false;
-}
+    bool FileSystemDefault::GetFileSize(ul::FileHandle handle_a,
+                                        int64_t& result_a)
+    {
+        auto iter_ = open_files_.find(handle_a);
+        if (iter_ != open_files_.end())
+        {
+            auto& file_ = iter_->second;
+            file_->seekg(0, file_->end);
+            
+            result_a = (int64_t)file_->tellg();
+            return true;
+        }
 
-bool FileSystemDefault::GetFileMimeType(const ul::String16& path_, ul::String16& result_)
-{
-	ul::String8 utf8 = ul::String(path_).utf8();
-	std::string filepath(utf8.data(), utf8.length());
-	std::string ext = filepath.substr(filepath.find_last_of(".") + 1);
-	result_ = ul::String16(MimeTypeHelper::FileExtensionToMimeTypeA(ext.c_str()));
-	return true;
-}
+        return false;
+    }
 
-ul::FileHandle FileSystemDefault::OpenFile(const ul::String16& path_, bool openForWriting_)
-{
-	std::string fullPath = GetRelativePath(path_);
-	std::unique_ptr<std::ifstream> file(new std::ifstream(fullPath, std::ifstream::ate | std::ifstream::binary));
-	if (!file->good())
-		return ul::invalidFileHandle;
+    bool FileSystemDefault::GetFileMimeType(const ul::String16& path_a,
+                                            ul::String16& result_a)
+    {
+        ul::String8 utf8_ = ul::String(path_a).utf8();
+        std::string filepath_(utf8_.data(), utf8_.length());
+        std::string ext_ = filepath_.substr(filepath_.find_last_of(".") + 1);
+        
+        result_a = ul::String16(
+                   MimeTypeHelper::FileExtensionToMimeTypeA(ext_.c_str()));
+        
+        return true;
+    }
 
-	ul::FileHandle handle = nextFileHandle++;
-	openFiles[handle] = std::move(file);
-	return handle;
-}
+    ul::FileHandle FileSystemDefault::OpenFile(const ul::String16& path_a,
+                                               bool open_for_writing_a)
+    {
+        std::string fullpath_ = _GetRelativePath(path_a);
+        std::unique_ptr<std::ifstream> file_(
+                new std::ifstream(fullpath_,
+                                  std::ifstream::ate | std::ifstream::binary));
+        
+        if (!file_->good())
+            return ul::invalidFileHandle;
 
-void FileSystemDefault::CloseFile(ul::FileHandle& handle_)
-{
-	openFiles.erase(handle_);
-	handle_ = ul::invalidFileHandle;
-}
+        ul::FileHandle handle_ = next_file_handle_++;
+        open_files_[handle_] = std::move(file_);
+        
+        return handle_;
+    }
 
-int64_t FileSystemDefault::ReadFromFile(ul::FileHandle handle_, char* data_, int64_t length_)
-{
-	auto iter = openFiles.find(handle_);
-	if (iter != openFiles.end())
-	{
-		auto& file = iter->second;
-		file->seekg(0, file->beg);
-		file->read(data_, (std::streamsize)length_);
-		return (int64_t)file->gcount();
-	}
-	return int64_t();
-}
+    void FileSystemDefault::CloseFile(ul::FileHandle& handle_a)
+    {
+        open_files_.erase(handle_a);
+        handle_a = ul::invalidFileHandle;
+    }
 
-std::string FileSystemDefault::GetRelativePath(const ul::String16& filePath_)
-{
-	ul::String8 utf8 = ul::String(filePath_).utf8();
-	std::string relativePath(utf8.data(), utf8.length());
-	std::string fullpath = baseDirectory + relativePath;
-	return fullpath;
-}
+    int64_t FileSystemDefault::ReadFromFile(ul::FileHandle handle_a,
+                                            char* data_a,
+                                            int64_t length_a)
+    {
+        auto iter_ = open_files_.find(handle_a);
+        if (iter_ != open_files_.end())
+        {
+            auto& file_ = iter_->second;
+            file_->seekg(0, file_->beg);
+            file_->read(data_a, (std::streamsize)length_a);
+            
+            return (int64_t)file_->gcount();
+        }
+        
+        return int64_t();
+    }
+
+    std::string FileSystemDefault::_GetRelativePath(
+            const ul::String16& filepath_a)
+    {
+        ul::String8 utf8_ = ul::String(filepath_a).utf8();
+        std::string relative_path_(utf8_.data(), utf8_.length());
+        std::string fullpath_ = base_directory_ + relative_path_;
+        
+        return fullpath_;
+    }
+} // namespace VE_Kernel

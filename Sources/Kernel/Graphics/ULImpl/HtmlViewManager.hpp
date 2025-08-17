@@ -1,4 +1,9 @@
-#pragma once
+// Copyright (c) 2025 Alexander Starov
+// MIT License
+
+#ifndef HTMLVIEWMANAGER_HPP
+#define HTMLVIEWMANAGER_HPP
+
 #include "HtmlView.hpp"
 #include "../../Window/Input/KeyboardEvent.hpp"
 #include "../../Window/Input/MouseEvent.hpp"
@@ -10,24 +15,32 @@
 #include "FileSystems/FileSystemDefault.hpp"
 #include "GPUAdapters/GPUDriverD3D11.hpp"
 
-class HtmlViewManager
+namespace VE_Kernel
 {
-public:
-	bool Initialize(D3DClass* pd3d);
-	void UpdateViews();
-	std::shared_ptr<HtmlView> CreateView(uint32_t width, uint32_t height, bool isTransparent = false);
-	void FireMouseEvent(MouseEvent mouseEvent);
-	void FireKeyboardEvent(KeyboardEvent keyboardEvent);
-	std::vector<std::shared_ptr<HtmlView>>& GetViews();
-	~HtmlViewManager();
+    class HtmlViewManager
+    {
+    public:
+        bool Initialize(D3DClass* d3d_a);
+        void UpdateViews();
+        std::shared_ptr<HtmlView> CreateView(uint32_t width_a,
+                                             uint32_t height_a,
+                                             bool is_transparent_a = false);
 
-private:
-	D3DClass* pd3d = nullptr;
-	ul::RefPtr<ul::Renderer> ultralightRenderer;
-	std::unique_ptr<LoggerDefault> logger;
-	std::unique_ptr<FontLoaderWin> fontLoader;
-	std::unique_ptr<FileSystemDefault> fileSystem;
-	std::unique_ptr<GPUDriverD3D11> gpuDriver;
-	std::vector<std::shared_ptr<HtmlView>> htmlViews;
-	VertexBuffer<Vertex_3pf_2tf> vertexBuffer;
-};
+        void FireMouseEvent(MouseEvent mouse_event_a);
+        void FireKeyboardEvent(KeyboardEvent keyboard_event_a);
+        std::vector<std::shared_ptr<HtmlView>>& GetViews();
+        ~HtmlViewManager();
+
+    private:
+        D3DClass* d3d_ = nullptr;
+        ul::RefPtr<ul::Renderer> ultralight_renderer_;
+        std::unique_ptr<LoggerDefault> logger_;
+        std::unique_ptr<FontLoaderWin> font_loader_;
+        std::unique_ptr<FileSystemDefault> filesystem_;
+        std::unique_ptr<GPUDriverD3D11> gpu_driver_;
+        std::vector<std::shared_ptr<HtmlView>> html_views_;
+        VertexBuffer<Vertex_3pf_2tf> vertex_buffer_;
+    };
+} // namespace VE_Kernel
+
+#endif

@@ -1,53 +1,59 @@
 #include "Mouse.hpp"
 
-int Mouse::GetPosX()
+namespace VE_Kernel
 {
-	return x;
-}
+    int Mouse::GetPosX()
+    {
+        return x_;
+    }
 
-int Mouse::GetPosY()
-{
-	return y;
-}
+    int Mouse::GetPosY()
+    {
+        return y_;
+    }
 
-MousePoint Mouse::GetPos()
-{
-	return { x,y };
-}
+    MousePoint Mouse::GetPos()
+    {
+        return {x_, y_};
+    }
 
-bool Mouse::EventBufferIsEmpty()
-{
-	return eventBuffer.empty();
-}
+    bool Mouse::EventBufferIsEmpty()
+    {
+        return event_buffer_.empty();
+    }
 
-MouseEvent Mouse::ReadEvent()
-{
-	if (eventBuffer.empty())
-	{
-		return MouseEvent();
-	}
-	else
-	{
-		MouseEvent e = eventBuffer.front(); //Get first event from buffer
-		eventBuffer.pop(); //Remove first event from buffer
-		return e;
-	}
-}
+    MouseEvent Mouse::ReadEvent()
+    {
+        if (event_buffer_.empty())
+        {
+            return MouseEvent();
+        } 
+        else
+        {
+            MouseEvent e_ = event_buffer_.front();
+            event_buffer_.pop();
+            return e_;
+        }
+    }
 
-void Mouse::OnWindowsMouseMessage(UINT uMsg_, WPARAM wParam_, LPARAM lParam_)
-{
-	MouseEvent mouseEvent(uMsg_, wParam_, lParam_);
-	switch (mouseEvent.type)
-	{
-	case MouseEvent::Type::MouseDown:
-		lastPressedButton = mouseEvent.button;
-		break;
-	case MouseEvent::Type::MouseUp:
-		lastPressedButton = MouseEvent::Button::None;
-		break;
-	case MouseEvent::Type::MouseMove:
-		mouseEvent.button = lastPressedButton;
-		break;
-	}
-	eventBuffer.push(mouseEvent);
-}
+    void Mouse::_OnWindowsMouseMessage(UINT u_msg_a,
+                                      WPARAM w_param_a,
+                                      LPARAM l_param_a)
+    {
+        MouseEvent mouse_event_(u_msg_a, w_param_a, l_param_a);
+        switch (mouse_event_.type_)
+        {
+        case MouseEvent::Type::MouseDown:
+            last_pressed_button_ = mouse_event_.button_;
+            break;
+        case MouseEvent::Type::MouseUp:
+            last_pressed_button_ = MouseEvent::Button::None;
+            break;
+        case MouseEvent::Type::MouseMove:
+            mouse_event_.button_ = last_pressed_button_;
+            break;
+        }
+
+        event_buffer_.push(mouse_event_);
+    }
+} // namespace VE_Kernel

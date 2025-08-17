@@ -1,49 +1,53 @@
 #include "HtmlViewViewListener.hpp"
 #include <Windows.h>
 
-HtmlViewViewListener::HtmlViewViewListener()
+namespace VE_Kernel
 {
-    cursor_hand = LoadCursor(NULL, IDC_HAND);
-    cursor_arrow = LoadCursor(NULL, IDC_ARROW);
-    cursor_ibeam = LoadCursor(NULL, IDC_IBEAM);
-}
-
-void HtmlViewViewListener::OnChangeTitle(ul::View* caller_, const ul::String& title_)
-{
-}
-
-void HtmlViewViewListener::OnChangeURL(ul::View* caller_, const ul::String& url_)
-{
-}
-
-void HtmlViewViewListener::OnChangeTooltip(ul::View* caller_, const ul::String& tooltip_)
-{
-}
-
-void HtmlViewViewListener::OnChangeCursor(ul::View* caller_, ul::Cursor cursor_)
-{
-    switch (cursor_)
+    HtmlViewViewListener::HtmlViewViewListener()
     {
-    case ultralight::kCursor_Hand:
-    {
-        SetCursor(cursor_hand);
-        break;
+        cursor_hand_ = LoadCursor(NULL, IDC_HAND);
+        cursor_arrow_ = LoadCursor(NULL, IDC_ARROW);
+        cursor_ibeam_ = LoadCursor(NULL, IDC_IBEAM);
     }
-    case ultralight::kCursor_Pointer:
-    {
-        SetCursor(cursor_arrow);
-        break;
-    }
-    case ultralight::kCursor_IBeam:
-    {
-        SetCursor(cursor_ibeam);
-        break;
-    }
-    }
-}
 
-void HtmlViewViewListener::OnAddConsoleMessage(ul::View* caller_, ul::MessageSource source_, ul::MessageLevel level_, const ul::String& message_, uint32_t lineNumber_, uint32_t columnNumber_, const ul::String& sourceId_)
-{
-    OutputDebugStringA(message_.utf8().data());
-    OutputDebugStringA("\n");
-}
+    void HtmlViewViewListener::OnChangeTitle(ul::View* caller_a,
+                                             const ul::String& title_a) {}
+
+    void HtmlViewViewListener::OnChangeURL(ul::View* caller_a,
+                                           const ul::String& url_a) {}
+
+    void HtmlViewViewListener::OnChangeTooltip(ul::View* caller_a,
+                                               const ul::String& tooltip_a) {}
+
+    void HtmlViewViewListener::OnChangeCursor(ul::View* caller_a,
+                                              ul::Cursor cursor_a)
+    {
+        switch (cursor_a)
+        {
+        case ultralight::kCursor_Hand: {
+            SetCursor(cursor_hand_);
+            break;
+        }
+        case ultralight::kCursor_Pointer: {
+            SetCursor(cursor_arrow_);
+            break;
+        }
+        case ultralight::kCursor_IBeam: {
+            SetCursor(cursor_ibeam_);
+            break;
+        }
+        }
+    }
+
+    void HtmlViewViewListener::OnAddConsoleMessage(ul::View* caller_a,
+                                                   ul::MessageSource source_a,
+                                                   ul::MessageLevel level_a,
+                                                   const ul::String& message_a,
+                                                   uint32_t line_number_a,
+                                                   uint32_t column_number_a,
+                                                   const ul::String& source_id_a)
+    {
+        OutputDebugStringA(message_a.utf8().data());
+        OutputDebugStringA("\n");
+    }
+} // namespace VE_Kernel

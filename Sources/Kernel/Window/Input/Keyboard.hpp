@@ -1,18 +1,31 @@
-#pragma once
+// Copyright (c) 2025 Alexander Starov
+// MIT License
+
+#ifndef KEYBOARD_HPP
+#define KEYBOARD_HPP
+
 #include "KeyboardEvent.hpp"
 
-class Keyboard
+namespace VE_Kernel
 {
-	friend class Window;
-public:
-	Keyboard();
-	bool KeyIsPressed(const unsigned char keycode);
-	bool EventBufferIsEmpty();
-	KeyboardEvent ReadEvent();
+    class Keyboard
+    {
+        friend class Window;
 
-private:
-	void OnWindowsKeyboardMessage(UINT uMsg, WPARAM wParam, LPARAM lParam);
+    public:
+        Keyboard();
+        bool KeyIsPressed(const unsigned char keycode_a);
+        bool EventBufferIsEmpty();
+        KeyboardEvent ReadEvent();
 
-	bool keyStates[256] = { false };
-	std::queue<KeyboardEvent> eventBuffer;
-};
+    private:
+        void _OnWindowsKeyboardMessage(
+                UINT u_msg_a, WPARAM w_param_a, LPARAM l_param_a);
+    
+    private:
+        bool key_states_[256] = {false};
+        std::queue<KeyboardEvent> event_buffer_;
+    };
+} // namespace VE_KErnel
+
+#endif

@@ -1,28 +1,42 @@
-#pragma once
-#include "../../../../Editor/pch.hpp"
+// Copyright (c) 2025 Alexander Starov
+// MIT License
 
-template<class T>
-using ComPtr = Microsoft::WRL::ComPtr<T>;
+#ifndef MAPENTRY_HPP
+#define MAPENTRY_HPP
 
-struct GeometryEntry
+#include <Ultralight/KeyEvent.h>
+#include <Ultralight/MouseEvent.h>
+#include <Ultralight/Ultralight.h>
+
+namespace ul = ultralight;
+
+namespace VE_Kernel
 {
-	ul::VertexBufferFormat format;
-	ComPtr<ID3D11Buffer> vertexBuffer;
-	ComPtr<ID3D11Buffer> indexBuffer;
-};
+    template <class T>
+    using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-struct TextureEntry
-{
-	ComPtr<ID3D11Texture2D> texture;
-	ComPtr<ID3D11ShaderResourceView> textureSRV;
-	bool isMSAARenderTarget = false;
-	bool needsResolve = false;
-	ComPtr<ID3D11Texture2D> resolveTexture;
-	ComPtr<ID3D11ShaderResourceView> resolveSRV;
-};
+    struct GeometryEntry
+    {
+        ul::VertexBufferFormat format_;
+        ComPtr<ID3D11Buffer> vertex_buffer_;
+        ComPtr<ID3D11Buffer> index_buffer_;
+    };
 
-struct RenderTargetEntry
-{
-	ComPtr<ID3D11RenderTargetView> renderTargetView;
-	uint32_t renderTargetTextureId;
-};
+    struct TextureEntry
+    {
+        ComPtr<ID3D11Texture2D> texture_;
+        ComPtr<ID3D11ShaderResourceView> texture_srv_;
+        bool is_msaa_render_target_ = false;
+        bool needs_resolve_ = false;
+        ComPtr<ID3D11Texture2D> resolve_texture_;
+        ComPtr<ID3D11ShaderResourceView> resolve_srv_;
+    };
+
+    struct RenderTargetEntry
+    {
+        ComPtr<ID3D11RenderTargetView> render_target_view_;
+        uint32_t render_target_texture_id_;
+    };
+} // namespace VE_Kernel
+
+#endif

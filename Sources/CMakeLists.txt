@@ -1,6 +1,5 @@
 set(SRC
     Editor/Source.cpp
-    Editor/pch.hpp
     Kernel/Graphics/D3D/Shaders/PixelShader.cpp
     Kernel/Graphics/D3D/Shaders/VertexShader.cpp
     Kernel/Graphics/D3D/ConstantBuffer.cpp
@@ -28,6 +27,8 @@ set(SRC
     Kernel/Window/Input/MouseEvent.cpp
     Kernel/Window/Window.cpp
     Kernel/Kernel.cpp
+	resource.rc  # Добавляем файл ресурсов
+    ../../Resources/Icon/icon.ico  # Добавляем иконку
 )
 
 source_group(" " 		   				FILES ${SRC})

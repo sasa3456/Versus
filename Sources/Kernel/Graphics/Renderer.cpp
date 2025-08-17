@@ -2,96 +2,157 @@
 #include "../Window/Window.hpp"
 #include "D3D/InputLayoutDescriptions.hpp"
 
-bool Renderer::Initialize(Window* pWindow_)
+namespace VE_Kernel
 {
-	pWindow = pWindow_;
-	if (!d3d.Initialize(pWindow))
-		return false;
+    bool Renderer::Initialize(Window* window_a)
+    {
+        window_ = window_a;
+        if (!d3d_.Initialize(window_))
+            return false;
 
-	if (!InitializeConstantBuffers())
-		return false;
+        if (!_InitializeConstantBuffers())
+            return false;
 
-	if (!InitializeShaders())
-		return false;
+        if (!_InitializeShaders())
+            return false;
 
-	return true;
-}
+        return true;
+    }
 
-void Renderer::BeginFrame()
-{
-	d3d.deviceContext->ClearState();
+    void Renderer::BeginFrame()
+    {
+        d3d_.device_context_->ClearState();
 
-	d3d.deviceContext->OMSetRenderTargets(1, d3d.renderTargetView.GetAddressOf(), d3d.depthStencilView.Get());
-	d3d.deviceContext->OMSetDepthStencilState(d3d.depthStencilState.Get(), 0);
-	d3d.deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	CD3D11_VIEWPORT viewport(0.0f, 0.0f, static_cast<float>(pWindow->GetWidth()), static_cast<float>(pWindow->GetHeight()));
-	d3d.deviceContext->RSSetViewports(1, &viewport);
-	d3d.deviceContext->RSSetState(d3d.rasterizerState.Get());
-	d3d.deviceContext->PSSetSamplers(0, 1, d3d.samplerState.GetAddressOf());
+        d3d_.device_context_->OMSetRenderTargets(
+                1,
+                d3d_.render_target_view_.GetAddressOf(),
+                d3d_.depth_stencil_view_.Get());
+        
+        d3d_.device_context_->OMSetDepthStencilState(
+            d3d_.depth_stencil_state_.Get(), 0);
 
-	float backgroundColor[] = { 0.0f, 0.0f, 0.0f, 0.0f };
-	d3d.deviceContext->ClearRenderTargetView(d3d.renderTargetView.Get(), backgroundColor);
-	d3d.deviceContext->ClearDepthStencilView(d3d.depthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+        d3d_.device_context_->IASetPrimitiveTopology(
+                D3D11_PRIMITIVE_TOPOLOGY::
+                        D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        
+        CD3D11_VIEWPORT viewport_(0.0f,
+                                  0.0f,
+                                  static_cast<float>(window_->GetWidth()),
+                                  static_cast<float>(window_->GetHeight()));
+        
+        d3d_.device_context_->RSSetViewports(1, &viewport_);
+        d3d_.device_context_->RSSetState(d3d_.rasterizer_state_.Get());
+        d3d_.device_context_->PSSetSamplers(0, 1, 
+            d3d_.sampler_state_.GetAddressOf());
 
-}
+        float background_color_[] = {0.0f, 0.0f, 0.0f, 0.0f};
+        d3d_.device_context_->ClearRenderTargetView(d3d_.render_target_view_.Get(),
+                                                    background_color_);
+       
+        d3d_.device_context_->ClearDepthStencilView(d3d_.depth_stencil_view_.Get(),
+                                                    D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
+                                                    1.0f, 0);
+    }
 
-void Renderer::EndFrame()
-{
-	d3d.swapchain->Present(1, NULL);
-}
+    void Renderer::EndFrame()
+    {
+        d3d_.swapchain_->Present(1, NULL);
+    }
 
-void Renderer::RenderView(std::shared_ptr<HtmlView> view_)
-{
-	if (view_->IsLoading() == false)
-	{
-		cb_worldMatrix.data = view_->GetWorldMatrix();
-		cb_worldMatrix.ApplyChanges();
+    void Renderer::RenderView(std::shared_ptr<HtmlView> view_a)
+    {
+        if (view_a->IsLoading() == false)
+        {
+            cb_world_matrix_.data_ = view_a->GetWorldMatrix();
+            cb_world_matrix_.ApplyChanges();
 
-		d3d.deviceContext->IASetInputLayout(vs_orthographic2d.GetInputLayout());
-		d3d.deviceContext->PSSetShader(ps_orthographic2d.GetShader(), nullptr, 0);
-		d3d.deviceContext->VSSetShader(vs_orthographic2d.GetShader(), nullptr, 0);
-		d3d.deviceContext->VSSetConstantBuffers(0, 1, cb_orthoMatrix.GetAddressOf());
-		d3d.deviceContext->VSSetConstantBuffers(1, 1, cb_worldMatrix.GetAddressOf());
-		d3d.deviceContext->PSSetShaderResources(0, 1, view_->GetAddressOfShaderResourceView());
+            d3d_.device_context_->IASetInputLayout(
+                                     vs_orthographic2d_.GetInputLayout());
+            
+            d3d_.device_context_->PSSetShader(ps_orthographic2d_.GetShader(),
+                                              nullptr, 0);
+            
+            d3d_.device_context_->VSSetShader(vs_orthographic2d_.GetShader(),
+                                              nullptr, 0);
+            
+            d3d_.device_context_
+                    ->VSSetConstantBuffers(0, 1, cb_ortho_matrix_.GetAddressOf());
+            d3d_.device_context_
+                    ->VSSetConstantBuffers(1, 1, cb_world_matrix_.GetAddressOf());
+            d3d_.device_context_->PSSetShaderResources( 0, 1,
+                    view_a->GetAddressOfShaderResourceView());
 
-		UINT offsets = 0;
-		auto vb_view = view_->GetVertexBuffer();
-		d3d.deviceContext->IASetVertexBuffers(0, 1, vb_view->GetAddressOf(), vb_view->StridePtr(), &offsets);
-		d3d.deviceContext->Draw(vb_view->VertexCount(), 0);
-	}
-}
+            UINT offsets_ = 0;
+            auto vb_view_ = view_a->GetVertexBuffer();
+            d3d_.device_context_->IASetVertexBuffers(0, 1, vb_view_->GetAddressOf(),
+                                                     vb_view_->StridePtr(), &offsets_);
+            
+            d3d_.device_context_->Draw(vb_view_->VertexCount(), 0);
+        }
+    }
 
-D3DClass* Renderer::GetD3DPtr()
-{
-	return &d3d;
-}
+    D3DClass* Renderer::GetD3DPtr()
+    {
+        return &d3d_;
+    }
 
-bool Renderer::InitializeShaders()
-{
-	HRESULT hr = ps_orthographic2d.Initialize(d3d.device.Get(), L"ps_4pf_2tf.cso");
-	ReturnFalseIfFail(hr, "Renderer failed to initialize orthographic 2d pixel shader.");
+    bool Renderer::_InitializeShaders()
+    {
+        HRESULT hr_ = ps_orthographic2d_.Initialize(d3d_.device_.Get(),
+                                                    L"ps_4pf_2tf.cso");
+        
+        ReturnFalseIfFail(
+                hr_,
+                "Renderer failed to initialize orthographic 2d pixel shader.");
 
-	hr = vs_orthographic2d.Initialize(d3d.device.Get(), L"vs_3pf_2tf.cso", InputLayoutDescription_3pf_2tf);
-	ReturnFalseIfFail(hr, "Renderer failed to initialize orthographic 2d pixel shader.");
+        hr_ = vs_orthographic2d_.Initialize(d3d_.device_.Get(),
+                                            L"vs_3pf_2tf.cso",
+                                            InputLayoutDescription_3pf_2tf);
+        
+        ReturnFalseIfFail(
+                hr_,
+                "Renderer failed to initialize orthographic 2d pixel shader.");
 
-	return true;
-}
+        return true;
+    }
 
-bool Renderer::InitializeConstantBuffers()
-{
-	//Orthographic Matrix Constant Buffer
-	HRESULT hr = cb_orthoMatrix.Initialize(d3d.device.Get(), d3d.deviceContext.Get());
-	ReturnFalseIfFail(hr, "Renderer failed to initialize constant buffer for orthographic matrix.");
-	cb_orthoMatrix.data = DirectX::XMMatrixOrthographicOffCenterLH(0, pWindow->GetWidth(), pWindow->GetHeight(), 0, 0, 100);
-	hr = cb_orthoMatrix.ApplyChanges();
-	ReturnFalseIfFail(hr, "Renderer failed to apply changes to constant buffer for orthographic matrix.");
+    bool Renderer::_InitializeConstantBuffers()
+    {
+        HRESULT hr_ = cb_ortho_matrix_.Initialize(d3d_.device_.Get(),
+                                                  d3d_.device_context_.Get());
+        
+        ReturnFalseIfFail(hr_,
+                          "Renderer failed to initialize constant buffer for "
+                          "orthographic matrix.");
+        
+        cb_ortho_matrix_.data_ =
+                DirectX::XMMatrixOrthographicOffCenterLH(0,
+                                                         window_->GetWidth(),
+                                                         window_->GetHeight(),
+                                                         0,
+                                                         0,
+                                                         100);
+        
+        hr_ = cb_ortho_matrix_.ApplyChanges();
+        ReturnFalseIfFail(hr_,
+                          "Renderer failed to apply changes to constant buffer "
+                          "for orthographic matrix.");
 
-	//Quad World Matrix Constant Buffer
-	hr = cb_worldMatrix.Initialize(d3d.device.Get(), d3d.deviceContext.Get());
-	ReturnFalseIfFail(hr, "Renderer failed to initialize constant buffer for quad world matrix.");
-	cb_worldMatrix.data = DirectX::XMMatrixScaling(pWindow->GetWidth()/2, pWindow->GetHeight()/2, 1);
-	hr = cb_worldMatrix.ApplyChanges();
-	ReturnFalseIfFail(hr, "Renderer failed to apply changes to constant buffer for quad world matrix.");
+        hr_ = cb_world_matrix_.Initialize(d3d_.device_.Get(),
+                                          d3d_.device_context_.Get());
+        
+        ReturnFalseIfFail(hr_,
+                          "Renderer failed to initialize constant buffer for "
+                          "quad world matrix.");
+       
+        cb_world_matrix_.data_ = DirectX::XMMatrixScaling(window_->GetWidth() / 2,
+                                                          window_->GetHeight() / 2, 1);
 
-	return true;
-}
+        hr_ = cb_world_matrix_.ApplyChanges();
+        ReturnFalseIfFail(hr_,
+                          "Renderer failed to apply changes to constant buffer "
+                          "for quad world matrix.");
+
+        return true;
+    }
+} // namespace VE_Kernel

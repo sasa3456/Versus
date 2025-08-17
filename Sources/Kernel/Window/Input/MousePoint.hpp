@@ -1,7 +1,11 @@
-#pragma once
+// Copyright (c) 2025 Alexander Starov
+// MIT License
 
-struct MousePoint
+namespace VE_Kernel
 {
-	int x;
-	int y;
-};
+    struct MousePoint
+    {
+        int x_;
+        int y_;
+    };
+} // namespace VE_Kernel

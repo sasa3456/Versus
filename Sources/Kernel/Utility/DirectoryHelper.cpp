@@ -1,68 +1,75 @@
 #include "DirectoryHelper.hpp"
 #include <Windows.h>
 
-std::string DirectoryHelper::GetExecutableDirectoryA()
+namespace VE_Kernel
 {
-	if (executableDirectoryA != "")
-		return executableDirectoryA;
+    std::string DirectoryHelper::GetExecutableDirectoryA()
+    {
+        if (executable_directory_a_ != "")
+            return executable_directory_a_;
 
-	char szExecutablePath[MAX_PATH];
-	GetModuleFileNameA(NULL, szExecutablePath, MAX_PATH);
+        char sz_executable_path_[MAX_PATH];
+        GetModuleFileNameA(NULL, sz_executable_path_, MAX_PATH);
 
-	std::string executablePath(szExecutablePath);
+        std::string executable_path_(sz_executable_path_);
 
-	executableDirectoryA = executablePath.substr(0, executablePath.find_last_of("/\\")) + "/";
-	executableDirectoryA = NormalizePathA(executableDirectoryA); //Replace \\ with /
-	return executableDirectoryA;
-}
+        executable_directory_a_ =
+                executable_path_.substr(0, executable_path_.find_last_of("/\\"))
+                + "/";
 
-std::wstring DirectoryHelper::GetExecutableDirectory()
-{
-    if (!executableDirectory.empty())
-        return executableDirectory;
+        executable_directory_a_ = NormalizePathA(executable_directory_a_);
 
-    // Используем буфер для широких символов
-    wchar_t szExecutablePath[MAX_PATH];
-    // Явный вызов Unicode-версии функции
-    DWORD pathLength = GetModuleFileNameW(NULL, szExecutablePath, MAX_PATH);
-    
-    // Проверка на ошибки
-    if (pathLength == 0 || pathLength >= MAX_PATH) {
-        // Обработка ошибки: вернуть пустую строку или бросить исключение
-        return L"";
+        return executable_directory_a_;
     }
 
-    std::wstring executablePath(szExecutablePath);
-    executableDirectory = executablePath.substr(0, executablePath.find_last_of(L"/\\")) + L"/";
-    executableDirectory = NormalizePath(executableDirectory);
-    return executableDirectory;
-}
+    std::wstring DirectoryHelper::GetExecutableDirectory()
+    {
+        if (!executable_directory_.empty())
+            return executable_directory_;
 
-std::string DirectoryHelper::NormalizePathA(std::string path_)
-{
-	if (!path_.empty())
-	{
-		for (size_t i = 0; i < path_.length(); ++i)
-		{
-			if (path_[i] == '\\')
-				path_[i] = '/';
-		}
-	}
-	return path_;
-}
+        wchar_t sz_executable_path_[MAX_PATH];
+        DWORD path_length_ = GetModuleFileNameW(NULL, sz_executable_path_, MAX_PATH);
 
-std::wstring DirectoryHelper::NormalizePath(std::wstring path_)
-{
-	if (!path_.empty())
-	{
-		for (size_t i = 0; i < path_.length(); ++i)
-		{
-			if (path_[i] == L'\\')
-				path_[i] = L'/';
-		}
-	}
-	return path_;
-}
+        if (path_length_ == 0 || path_length_ >= MAX_PATH)
+        {
+            return L"";
+        }
 
-std::string DirectoryHelper::executableDirectoryA = "";
-std::wstring DirectoryHelper::executableDirectory = L"";
+        std::wstring executable_path_(sz_executable_path_);
+        executable_directory_ =
+                executable_path_.substr(0, 
+                executable_path_.find_last_of(L"/\\")) + L"/";
+        
+        executable_directory_ = NormalizePath(executable_directory_);
+        return executable_directory_;
+    }
+
+    std::string DirectoryHelper::NormalizePathA(std::string path_a)
+    {
+        if (!path_a.empty())
+        {
+            for (size_t i_ = 0; i_ < path_a.length(); ++i_)
+            {
+                if (path_a[i_] == '\\')
+                    path_a[i_] = '/';
+            }
+        }
+        return path_a;
+    }
+
+    std::wstring DirectoryHelper::NormalizePath(std::wstring path_a)
+    {
+        if (!path_a.empty())
+        {
+            for (size_t i_ = 0; i_ < path_a.length(); ++i_)
+            {
+                if (path_a[i_] == L'\\')
+                    path_a[i_] = L'/';
+            }
+        }
+        return path_a;
+    }
+
+    std::string DirectoryHelper::executable_directory_a_ = "";
+    std::wstring DirectoryHelper::executable_directory_ = L"";
+} // namespace VE_Kernel 

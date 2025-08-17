@@ -1,88 +1,89 @@
 #include "MouseEvent.hpp"
 
-MouseEvent::MouseEvent()
-	:
-	type(Type::UninitializedType),
-	button(Button::UninitializedButton),
-	x(0),
-	y(0)
-{}
-
-MouseEvent::MouseEvent(UINT uMsg_, WPARAM wParam_, LPARAM lParam_)
+namespace VE_Kernel
 {
-	x = LOWORD(lParam_);
-	y = HIWORD(lParam_);
-	switch (uMsg_)
-	{
-	case WM_MOUSEMOVE:
-		button = Button::None;
-		type = Type::MouseMove;
-		break;
-	case WM_LBUTTONDOWN:
-		button = Button::Left;
-		type = Type::MouseDown;
-		break;
-	case WM_RBUTTONDOWN:
-		button = Button::Right;
-		type = Type::MouseDown;
-		break;
-	case WM_MBUTTONDOWN:
-		button = Button::Middle;
-		type = Type::MouseDown;
-		break;
-	case WM_LBUTTONUP:
-		button = Button::Left;
-		type = Type::MouseUp;
-		break;
-	case WM_RBUTTONUP:
-		button = Button::Right;
-		type = Type::MouseUp;
-		break;
-	case WM_MBUTTONUP:
-		button = Button::Middle;
-		type = Type::MouseUp;
-		break;
-	default:
-		break;
-	}
-}
+    MouseEvent::MouseEvent()
+        : type_(Type::UninitializedType), button_(Button::UninitializedButton),
+          x_(0), y_(0)
+    {}
 
-bool MouseEvent::IsValid() const
-{
-	return (type != Type::UninitializedType && button != Button::UninitializedButton);
-}
+    MouseEvent::MouseEvent(UINT u_msg_a, WPARAM w_param_a, LPARAM l_param_a)
+    {
+        x_ = LOWORD(l_param_a);
+        y_ = HIWORD(l_param_a);
+        switch (u_msg_a)
+        {
+        case WM_MOUSEMOVE:
+            button_ = Button::None;
+            type_ = Type::MouseMove;
+            break;
+        case WM_LBUTTONDOWN:
+            button_ = Button::Left;
+            type_ = Type::MouseDown;
+            break;
+        case WM_RBUTTONDOWN:
+            button_ = Button::Right;
+            type_ = Type::MouseDown;
+            break;
+        case WM_MBUTTONDOWN:
+            button_ = Button::Middle;
+            type_ = Type::MouseDown;
+            break;
+        case WM_LBUTTONUP:
+            button_ = Button::Left;
+            type_ = Type::MouseUp;
+            break;
+        case WM_RBUTTONUP:
+            button_ = Button::Right;
+            type_ = Type::MouseUp;
+            break;
+        case WM_MBUTTONUP:
+            button_ = Button::Middle;
+            type_ = Type::MouseUp;
+            break;
+        default:
+            break;
+        }
+    }
 
-MouseEvent::Type MouseEvent::GetType() const
-{
-	return type;
-}
+    bool MouseEvent::IsValid() const
+    {
+        return (type_ != Type::UninitializedType
+                && button_ != Button::UninitializedButton);
+    }
 
-MouseEvent::Button MouseEvent::GetButton() const
-{
-	return button;
-}
+    MouseEvent::Type MouseEvent::GetType() const
+    {
+        return type_;
+    }
 
-MousePoint MouseEvent::GetPos() const
-{
-	return { x,y };
-}
+    MouseEvent::Button MouseEvent::GetButton() const
+    {
+        return button_;
+    }
 
-int MouseEvent::GetPosX() const
-{
-	return x;
-}
+    MousePoint MouseEvent::GetPos() const
+    {
+        return {x_, y_};
+    }
 
-int MouseEvent::GetPosY() const
-{
-	return y;
-}
+    int MouseEvent::GetPosX() const
+    {
+        return x_;
+    }
 
-ul::MouseEvent MouseEvent::ToUltralightMouseEvent()
-{
-	ul::MouseEvent mouseEvent{};
-	mouseEvent.button = static_cast<ul::MouseEvent::Button>(button);
-	mouseEvent.type = static_cast<ul::MouseEvent::Type>(type);
-	mouseEvent.x = x;
-	mouseEvent.y = y;
-	return mouseEvent;
-}
+    int MouseEvent::GetPosY() const
+    {
+        return y_;
+    }
+
+    ul::MouseEvent MouseEvent::ToUltralightMouseEvent()
+    {
+        ul::MouseEvent mouse_event_ {};
+        mouse_event_.button = static_cast<ul::MouseEvent::Button>(button_);
+        mouse_event_.type = static_cast<ul::MouseEvent::Type>(type_);
+        mouse_event_.x = x_;
+        mouse_event_.y = y_;
+        return mouse_event_;
+    }
+} // namespace VE_Kernel

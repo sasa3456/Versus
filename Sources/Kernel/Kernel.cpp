@@ -1,78 +1,85 @@
 #include "Kernel.hpp"
 
-bool Engine::Initialize(uint32_t width_, uint32_t height_, const char* title_)
+namespace VE_Kernel
 {
-	if (!window.Initialize(width_, height_, title_))
-		return false;
-
-	isRunning = true;
-
-	pMouse = &window.GetMouse();
-	pKeyboard = &window.GetKeyboard();
-
-	if (!renderer.Initialize(&window))
-		return false;
-
-	if (!htmlViewManager.Initialize(renderer.GetD3DPtr()))
+    bool Engine::Initialize(uint32_t width_a,
+                            uint32_t height_a,
+                            const char* title_a)
     {
-        // Используем широкие строки
-        ErrorHandler::LogCriticalError(L"Failed to initialize html view manager.");
-        return false;
+        if (!window_.Initialize(width_a, height_a, title_a))
+            return false;
+
+        is_running_ = true;
+
+        mouse_ = &window_.GetMouse();
+        keyboard_ = &window_.GetKeyboard();
+
+        if (!renderer_.Initialize(&window_))
+            return false;
+
+        if (!html_view_manager_.Initialize(renderer_.GetD3DPtr()))
+        {
+            ErrorHandler::LogCriticalError(
+                    L"Failed to initialize html view manager.");
+            
+            return false;
+        }
+
+        auto temp_view_ = html_view_manager_.CreateView(width_a, height_a);
+        if (temp_view_ == nullptr)
+        {
+            ErrorHandler::LogCriticalError(L"Failed to create html view.");
+            return false;
+        }
+
+        temp_view_->LoadURL("file:///web/example.html");
+        temp_view_->Focus();
+
+        return true;
     }
 
-    auto tempView = htmlViewManager.CreateView(width_, height_);
-    if (tempView == nullptr)
+    bool Engine::IsRunning()
     {
-        // Используем широкие строки
-        ErrorHandler::LogCriticalError(L"Failed to create html view.");
-        return false;
+        return is_running_;
     }
-	tempView->LoadURL("file:///web/example.html");
-	tempView->Focus();
 
-	return true;
-}
+    void Engine::Tick(float delta_time_a)
+    {
+        if (!window_.ProcessMessages())
+        {
+            is_running_ = false;
+            return;
+        }
 
-bool Engine::IsRunning()
-{
-	return isRunning;
-}
+        while (!mouse_->EventBufferIsEmpty())
+        {
+            MouseEvent me_ = mouse_->ReadEvent();
+            if (me_.IsValid())
+            {
+                html_view_manager_.FireMouseEvent(me_);
+            }
+        }
 
-void Engine::Tick(float deltaTime_)
-{
-	if (!window.ProcessMessages())
-	{
-		isRunning = false;
-		return;
-	}
-	//Process Mouse messages
-	while (!pMouse->EventBufferIsEmpty())
-	{
-		MouseEvent me = pMouse->ReadEvent();
-		if (me.IsValid())
-		{
-			htmlViewManager.FireMouseEvent(me);
-		}
-	}
-	//Process Keyboard messages
-	while (!pKeyboard->EventBufferIsEmpty())
-	{
-		KeyboardEvent kbe = pKeyboard->ReadEvent();
-		if (kbe.IsValid())
-		{
-			htmlViewManager.FireKeyboardEvent(kbe);
-		}
-	}
-}
+        while (!keyboard_->EventBufferIsEmpty())
+        {
+            KeyboardEvent kbe_ = keyboard_->ReadEvent();
+            if (kbe_.IsValid())
+            {
+                html_view_manager_.FireKeyboardEvent(kbe_);
+            }
+        }
+    }
 
-void Engine::Render()
-{
-	renderer.GetD3DPtr()->deviceContext->ClearState();
-	htmlViewManager.UpdateViews();
-	renderer.BeginFrame();
-	for (auto& view : htmlViewManager.GetViews())
-	{
-		renderer.RenderView(view);
-	}
-	renderer.EndFrame();
-}
+    void Engine::Render()
+    {
+        renderer_.GetD3DPtr()->device_context_->ClearState();
+        html_view_manager_.UpdateViews();
+        renderer_.BeginFrame();
+        for (auto& view_ : html_view_manager_.GetViews())
+        {
+            renderer_.RenderView(view_);
+        }
+
+        renderer_.EndFrame();
+    }
+} // namespace VE_Kernel

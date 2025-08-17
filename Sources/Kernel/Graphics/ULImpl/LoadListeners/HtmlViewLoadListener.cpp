@@ -1,6 +1,10 @@
 #include "HtmlViewLoadListener.hpp"
 
-void HtmlViewLoadListener::OnDOMReady(ul::View* view_)
+namespace VE_Kernel
 {
-	//view_->EvaluateScript("document.getElementById('myinput').value = 'test'");
-}
+    void HtmlViewLoadListener::OnDOMReady(ul::View* view_)
+    {
+        // view_->EvaluateScript("document.getElementById('myinput').value =
+        // 'test'");
+    }
+} // namespace VE_Kernel

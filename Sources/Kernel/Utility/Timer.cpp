@@ -1,53 +1,57 @@
 #include "Timer.hpp"
 
-Timer::Timer()
+namespace VE_Kernel
 {
-	start = std::chrono::high_resolution_clock::now();
-	stop = std::chrono::high_resolution_clock::now();
-}
+    Timer::Timer()
+    {
+        start_ = std::chrono::high_resolution_clock::now();
+        stop_ = std::chrono::high_resolution_clock::now();
+    }
 
-double Timer::GetMilisecondsElapsed()
-{
-	if (isrunning)
-	{
-		auto elapsed = std::chrono::duration<double, std::milli>(std::chrono::high_resolution_clock::now() - start);
-		return elapsed.count();
-	}
-	else
-	{
-		auto elapsed = std::chrono::duration<double, std::milli>(stop - start);
-		return elapsed.count();
-	}
-}
+    double Timer::GetMilisecondsElapsed()
+    {
+        if (is_running_)
+        {
+            auto elapsed_ = std::chrono::duration<double, std::milli>(
+                    std::chrono::high_resolution_clock::now() - start_);
+            return elapsed_.count();
+        } 
+        else
+        {
+            auto elapsed_ = std::chrono::duration<double, std::milli>(stop_ - start_);
+            return elapsed_.count();
+        }
+    }
 
-void Timer::Restart()
-{
-	isrunning = true;
-	start = std::chrono::high_resolution_clock::now();
-}
+    void Timer::Restart()
+    {
+        is_running_ = true;
+        start_ = std::chrono::high_resolution_clock::now();
+    }
 
-bool Timer::Stop()
-{
-	if (!isrunning)
-		return false;
-	else
-	{
-		stop = std::chrono::high_resolution_clock::now();
-		isrunning = false;
-		return true;
-	}
-}
+    bool Timer::Stop()
+    {
+        if (!is_running_)
+            return false;
+        else
+        {
+            stop_ = std::chrono::high_resolution_clock::now();
+            is_running_ = false;
+            return true;
+        }
+    }
 
-bool Timer::Start()
-{
-	if (isrunning)
-	{
-		return false;
-	}
-	else
-	{
-		start = std::chrono::high_resolution_clock::now();
-		isrunning = true;
-		return true;
-	}
-}
+    bool Timer::Start()
+    {
+        if (is_running_)
+        {
+            return false;
+        } 
+        else
+        {
+            start_ = std::chrono::high_resolution_clock::now();
+            is_running_ = true;
+            return true;
+        }
+    }
+} // namespace VE_Kernel

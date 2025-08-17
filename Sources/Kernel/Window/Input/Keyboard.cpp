@@ -1,46 +1,51 @@
 #include "Keyboard.hpp"
 
-Keyboard::Keyboard()
+namespace VE_Kernel
 {
-}
+    Keyboard::Keyboard() {}
 
-bool Keyboard::KeyIsPressed(const unsigned char keycode_)
-{
-	return keyStates[keycode_];
-}
+    bool Keyboard::KeyIsPressed(const unsigned char keycode_a)
+    {
+        return key_states_[keycode_a];
+    }
 
-bool Keyboard::EventBufferIsEmpty()
-{
-	return eventBuffer.empty();
-}
+    bool Keyboard::EventBufferIsEmpty()
+    {
+        return event_buffer_.empty();
+    }
 
-KeyboardEvent Keyboard::ReadEvent()
-{
-	if (eventBuffer.empty()) //If no keys to be read?
-	{
-		return KeyboardEvent(); //return empty keyboard event
-	}
-	else
-	{
-		KeyboardEvent e = eventBuffer.front(); //Get first Keyboard Event from queue
-		eventBuffer.pop(); //Remove first item from queue
-		return e; //Returns keyboard event
-	}
-}
+    KeyboardEvent Keyboard::ReadEvent()
+    {
+        if (event_buffer_.empty())
+        {
+            return KeyboardEvent();
+        } 
+        else
+        {
+            KeyboardEvent e_ = event_buffer_.front();
+            event_buffer_.pop();
+            
+            return e_;
+        }
+    }
 
-void Keyboard::OnWindowsKeyboardMessage(UINT uMsg_, WPARAM wParam_, LPARAM lParam_)
-{
-	KeyboardEvent kbe(uMsg_, wParam_, lParam_);
-	switch (kbe.GetType())
-	{
-	case KeyboardEvent::Type::KeyDown:
-		keyStates[kbe.GetKeyCode()] = true;
-		break;
-	case KeyboardEvent::Type::KeyUp:
-		keyStates[kbe.GetKeyCode()] = false;
-		break;
-	case KeyboardEvent::Type::Char:
-		break;
-	}
-	eventBuffer.push(kbe);
-}
+    void Keyboard::_OnWindowsKeyboardMessage(UINT u_msg_a,
+                                            WPARAM w_param_a,
+                                            LPARAM l_param_a)
+    {
+        KeyboardEvent kbe_(u_msg_a, w_param_a, l_param_a);
+        switch (kbe_.GetType())
+        {
+        case KeyboardEvent::Type::KeyDown:
+            key_states_[kbe_.GetKeyCode()] = true;
+            break;
+        case KeyboardEvent::Type::KeyUp:
+            key_states_[kbe_.GetKeyCode()] = false;
+            break;
+        case KeyboardEvent::Type::Char:
+            break;
+        }
+
+        event_buffer_.push(kbe_);
+    }
+} // namespace VE_Kernel

@@ -1,124 +1,151 @@
 #include "HtmlView.hpp"
 
-HtmlView::HtmlView(GPUDriverD3D11* pGpuDriver_, ul::RefPtr<ul::View> view_, VertexBuffer<Vertex_3pf_2tf>& vertexBuffer_, uint32_t width_, uint32_t height_, bool isTransparent_)
-	:vertexBuffer(vertexBuffer_)
+namespace VE_Kernel
 {
-	pGpuDriver = pGpuDriver_;
-	view = view_;
-	width = width_;
-	height = height_;
-	isTransparent = isTransparent_;
-	viewLoadListener = std::make_unique<HtmlViewLoadListener>();
-	view->set_load_listener(viewLoadListener.get());
+    HtmlView::HtmlView(GPUDriverD3D11* gpu_driver_a,
+                       ul::RefPtr<ul::View> view_a,
+                       VertexBuffer<Vertex_3pf_2tf>& vertex_buffer_a,
+                       uint32_t width_a,
+                       uint32_t height_a,
+                       bool is_transparent_a) : vertex_buffer_(vertex_buffer_a)
+    {
+        gpu_driver_ = gpu_driver_a;
+        view_ = view_a;
+        width_ = width_a;
+        height_ = height_a;
+        is_transparent_ = is_transparent_a;
+        view_load_listener_ = std::make_unique<HtmlViewLoadListener>();
+        view_->set_load_listener(view_load_listener_.get());
 
-	viewViewListener = std::make_unique<HtmlViewViewListener>();
-	view->set_view_listener(viewViewListener.get());
+        view_view_listener_ = std::make_unique<HtmlViewViewListener>();
+        view_->set_view_listener(view_view_listener_.get());
 
-	RegisterNativeCFunctions();
-	UpdateWorldMatrix();
-}
+        _RegisterNativeCFunctions();
+        _UpdateWorldMatrix();
+    }
 
-void HtmlView::LoadURL(std::string url_)
-{
-	view->LoadURL(ul::String(url_.c_str()));
-}
+    void HtmlView::LoadURL(std::string url_a)
+    {
+        view_->LoadURL(ul::String(url_a.c_str()));
+    }
 
-bool HtmlView::IsLoading()
-{
-	return view->is_loading();
-}
+    bool HtmlView::IsLoading()
+    {
+        return view_->is_loading();
+    }
 
-void HtmlView::FireMouseEvent(ul::MouseEvent mouseEvent_)
-{
-	mouseEvent_.x -= position.x;
-	mouseEvent_.y -= position.y;
-	view->FireMouseEvent(mouseEvent_);
-}
+    void HtmlView::FireMouseEvent(ul::MouseEvent mouse_event_a)
+    {
+        mouse_event_a.x -= position_.x;
+        mouse_event_a.y -= position_.y;
+        view_->FireMouseEvent(mouse_event_a);
+    }
 
-void HtmlView::FireKeyboardEvent(ul::KeyEvent keyboardEvent_)
-{
-	view->FireKeyEvent(keyboardEvent_);
-}
+    void HtmlView::FireKeyboardEvent(ul::KeyEvent keyboard_event_a)
+    {
+        view_->FireKeyEvent(keyboard_event_a);
+    }
 
-void HtmlView::Focus()
-{
-	view->Focus();
-}
+    void HtmlView::Focus()
+    {
+        view_->Focus();
+    }
 
-void HtmlView::SetSize(uint32_t width_, uint32_t height_)
-{
-	width = width_;
-	height = height_;
-	view->Resize(width, height);
-	UpdateWorldMatrix();
-}
+    void HtmlView::SetSize(uint32_t width_a, uint32_t height_a)
+    {
+        width_ = width_a;
+        height_ = height_a;
+        view_->Resize(width_, height_);
+        _UpdateWorldMatrix();
+    }
 
-void HtmlView::SetPosition(float x_, float y_)
-{
-	position.x = x_;
-	position.y = y_;
-	UpdateWorldMatrix();
-}
+    void HtmlView::SetPosition(float x_a, float y_a)
+    {
+        position_.x = x_a;
+        position_.y = y_a;
+        _UpdateWorldMatrix();
+    }
 
-DirectX::XMMATRIX HtmlView::GetWorldMatrix()
-{
-	return worldMatrix;
-}
+    DirectX::XMMATRIX HtmlView::GetWorldMatrix()
+    {
+        return world_matrix_;
+    }
 
-ID3D11ShaderResourceView* const* HtmlView::GetAddressOfShaderResourceView()
-{
-	return pGpuDriver->GetAddressOfShaderResourceView(view);
-}
+    ID3D11ShaderResourceView* const* HtmlView::GetAddressOfShaderResourceView()
+    {
+        return gpu_driver_->GetAddressOfShaderResourceView(view_);
+    }
 
-VertexBuffer<Vertex_3pf_2tf>* HtmlView::GetVertexBuffer()
-{
-	return &vertexBuffer;
-}
+    VertexBuffer<Vertex_3pf_2tf>* HtmlView::GetVertexBuffer()
+    {
+        return &vertex_buffer_;
+    }
 
-HtmlView::~HtmlView()
-{
-	view = nullptr;
-}
+    HtmlView::~HtmlView()
+    {
+        view_ = nullptr;
+    }
 
-void HtmlView::UpdateWorldMatrix()
-{
-	worldMatrix = DirectX::XMMatrixScaling(width, height, 1) * DirectX::XMMatrixTranslation(position.x, position.y, 0);
-}
+    void HtmlView::_UpdateWorldMatrix()
+    {
+        world_matrix_ = DirectX::XMMatrixScaling(width_, height_, 1)
+                      * DirectX::XMMatrixTranslation(position_.x, position_.y, 0);
+    }
 
-JSValueRef NativeMessageBox(JSContextRef ctx_, 
-							JSObjectRef fnc_, 
-							JSObjectRef thisObject_, 
-							size_t argCount_, 
-							const JSValueRef args_[], 
-							JSValueRef* exception_)
-{
-	if (argCount_ != 1)
-	{
-		OutputDebugStringA("NativeMessageBox improperly called in javascript. Expected exactly 1 argument of type string.");
-		return JSValueMakeNull(ctx_);
-	}
+    JSValueRef NativeMessageBox(JSContextRef ctx_a,
+                                JSObjectRef fnc_a,
+                                JSObjectRef this_object_a,
+                                size_t arg_count_a,
+                                const JSValueRef args_a[],
+                                JSValueRef* exception_a)
+    {
+        if (arg_count_a != 1)
+        {
+            OutputDebugStringA(
+                    "NativeMessageBox improperly called in javascript. "
+                    "Expected exactly 1 argument of type string.");
+            
+            return JSValueMakeNull(ctx_a);
+        }
 
-	JSType argType = JSValueGetType(ctx_, args_[0]);
-	if (argType != JSType::kJSTypeString)
-	{
-		OutputDebugStringA("NativeMessageBox improperly called in javascript with an argument that was not of type string.");
-		return JSValueMakeNull(ctx_);
-	}
+        JSType arg_type_ = JSValueGetType(ctx_a, args_a[0]);
+        if (arg_type_ != JSType::kJSTypeString)
+        {
+            OutputDebugStringA(
+                    "NativeMessageBox improperly called in javascript with an "
+                    "argument that was not of type string.");
+            
+            return JSValueMakeNull(ctx_a);
+        }
 
-	JSStringRef msgArgumentJSRef = JSValueToStringCopy(ctx_, args_[0], NULL);
-	size_t length = JSStringGetLength(msgArgumentJSRef) + 1;
-	std::unique_ptr<char[]> stringBuffer = std::make_unique<char[]>(length);
-	JSStringGetUTF8CString(msgArgumentJSRef, stringBuffer.get(), length);
-	MessageBoxA(NULL, stringBuffer.get(), "NativeMessageBox", 0);
-	return JSValueMakeNull(ctx_);
-}
+        JSStringRef msg_argument_js_ref_ = JSValueToStringCopy(ctx_a,
+                                                               args_a[0],
+                                                               NULL);
+        
+        size_t length_ = JSStringGetLength(msg_argument_js_ref_) + 1;
+        std::unique_ptr<char[]> stringBuffer = std::make_unique<char[]>(length_);
+       
+        JSStringGetUTF8CString(msg_argument_js_ref_, stringBuffer.get(), length_);
+        MessageBoxA(NULL, stringBuffer.get(), "NativeMessageBox", 0);
+        
+        return JSValueMakeNull(ctx_a);
+    }
 
-void HtmlView::RegisterNativeCFunctions()
-{
-	JSContextRef ctx = view->js_context(); // Create a JavaScript String containing the name of our callback.
-	JSStringRef name = JSStringCreateWithUTF8CString("NativeMessageBox");
-	JSObjectRef func = JSObjectMakeFunctionWithCallback(ctx, name, NativeMessageBox); // Create a garbage-collected JavaScript function
-	JSObjectRef globalObj = JSContextGetGlobalObject(ctx); // Get the global JavaScript object (aka 'window')
-	JSObjectSetProperty(ctx, globalObj, name, func, 0, 0); // Store our function in the page's global JavaScript object so that it accessible from the page as 'OnButtonClick()'.
-	JSStringRelease(name); // Release the JavaScript String we created earlier.
-}
+    void HtmlView::_RegisterNativeCFunctions()
+    {
+        JSContextRef ctx_ = view_->js_context();
+        JSStringRef name_ = JSStringCreateWithUTF8CString("NativeMessageBox");
+        JSObjectRef func_ = JSObjectMakeFunctionWithCallback(ctx_, name_,
+                                                             NativeMessageBox);
+        
+        JSObjectRef global_obj_ = JSContextGetGlobalObject(ctx_);
+        JSObjectSetProperty(ctx_,
+                            global_obj_,
+                            name_,
+                            func_,
+                            0,
+                            0);
+
+        JSStringRelease(name_);
+    }
+} // namespace VE_Kernel

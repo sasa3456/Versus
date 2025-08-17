@@ -1,57 +1,69 @@
 #include "GPUDriverImpl.hpp"
 
-void GPUDriverImpl::BeginSynchronize()
+namespace VE_Kernel
 {
-}
+    void GPUDriverImpl::BeginSynchronize()
+    {}
 
-void GPUDriverImpl::EndSynchronize()
-{
-}
+    void GPUDriverImpl::EndSynchronize()
+    {}
 
-uint32_t GPUDriverImpl::NextTextureId()
-{
-	return nextTextureId++;
-}
+    uint32_t GPUDriverImpl::NextTextureId()
+    {
+        return next_texture_id_++;
+    }
 
-uint32_t GPUDriverImpl::NextRenderBufferId()
-{
-	return nextGeometryId++;
-}
+    uint32_t GPUDriverImpl::NextRenderBufferId()
+    {
+        return next_geometry_id_++;
+    }
 
-uint32_t GPUDriverImpl::NextGeometryId()
-{
-	return nextGeometryId++;
-}
+    uint32_t GPUDriverImpl::NextGeometryId()
+    {
+        return next_geometry_id_++;
+    }
 
-void GPUDriverImpl::UpdateCommandList(const ul::CommandList& list_)
-{
-	if (list_.size)
-	{
-		commandList.resize(list_.size);
-		memcpy(&commandList[0], list_.commands, sizeof(ul::Command) * list_.size);
-	}
-}
+    void GPUDriverImpl::UpdateCommandList(const ul::CommandList& list_a)
+    {
+        if (list_a.size)
+        {
+            command_list_.resize(list_a.size);
+            memcpy(&command_list_[0],
+                   list_a.commands,
+                   sizeof(ul::Command) * list_a.size);
+        }
+    }
 
-void GPUDriverImpl::DrawCommandList()
-{
-	if (commandList.empty())
-		return;
-	for (auto& cmd : commandList)
-	{
-		if (cmd.command_type == ul::kCommandType_DrawGeometry)
-			DrawGeometry(cmd.geometry_id, cmd.indices_count, cmd.indices_offset, cmd.gpu_state);
-		else if (cmd.command_type == ul::kCommandType_ClearRenderBuffer)
-			ClearRenderBuffer(cmd.gpu_state.render_buffer_id);
-	}
-	commandList.clear();
-}
+    void GPUDriverImpl::DrawCommandList()
+    {
+        if (command_list_.empty())
+            return;
+        
+        for (auto& cmd_ : command_list_)
+        {
+            if (cmd_.command_type == ul::kCommandType_DrawGeometry)
+                DrawGeometry(cmd_.geometry_id,
+                             cmd_.indices_count,
+                             cmd_.indices_offset,
+                             cmd_.gpu_state);
+            
+            else if (cmd_.command_type == ul::kCommandType_ClearRenderBuffer)
+                ClearRenderBuffer(cmd_.gpu_state.render_buffer_id);
+        }
 
-void GPUDriverImpl::DrawGeometry(uint32_t geometryId, uint32_t indexCount, uint32_t indexOffset, const ul::GPUState& state)
-{
-	//Implementation is overriden in GPUDriverD3D11
-}
+        command_list_.clear();
+    }
 
-void GPUDriverImpl::ClearRenderBuffer(uint32_t renderBufferId)
-{
-	//Implementation is overriden in GPUDriverD3D11
-}
+    void GPUDriverImpl::DrawGeometry(uint32_t geometry_id_a,
+                                     uint32_t index_count_a,
+                                     uint32_t index_offset_a,
+                                     const ul::GPUState& state_a)
+    {
+        // Implementation is overriden in GPUDriverD3D11
+    }
+
+    void GPUDriverImpl::ClearRenderBuffer(uint32_t render_buffer_id_a)
+    {
+        // Implementation is overriden in GPUDriverD3D11
+    }
+} // namespace VE_KErnel

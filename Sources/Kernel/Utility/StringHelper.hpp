@@ -1,9 +1,18 @@
-// StringHelper.hpp
-#pragma once
+// Copyright (c) 2025 Alexander Starov
+// MIT License
+
+#ifndef STRINGHELPER_HPP
+#define STRINGHELPER_HPP
+
 #include <string>
 
-class StringHelper
+namespace VE_Kernel
 {
-public:
-    static std::wstring StringToWide(const std::string& str);
-};
+    class StringHelper
+    {
+    public:
+        static std::wstring StringToWide(const std::string& str_a);
+    };
+} // namespace VE_Kernel
+
+#endif
