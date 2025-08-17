@@ -62,11 +62,23 @@ target_include_directories(Editor
     PRIVATE "${CMAKE_SOURCE_DIR}/External/Ultralight/inc"
 )
 
-# Копирование всего содержимого CacheFiles в выходной каталог
 add_custom_command(TARGET Editor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${CMAKE_SOURCE_DIR}/External/CacheFiles"
+        "${CMAKE_SOURCE_DIR}/Resources/UI"
         "$<TARGET_FILE_DIR:Editor>"
-    COMMENT "Copying CacheFiles to output directory"
+    VERBATIM
+)
+
+add_custom_command(TARGET Editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/External/CSO_Shaders"
+        "$<TARGET_FILE_DIR:Editor>"
+    VERBATIM
+)
+
+add_custom_command(TARGET Editor POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/External/Ultralight/dll"
+        "$<TARGET_FILE_DIR:Editor>"
     VERBATIM
 )

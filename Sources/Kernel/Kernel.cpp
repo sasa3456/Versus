@@ -32,7 +32,7 @@ namespace VE_Kernel
             return false;
         }
 
-        temp_view_->LoadURL("file:///web/example.html");
+        temp_view_->LoadURL("file:///ui/app.html");
         temp_view_->Focus();
 
         return true;
