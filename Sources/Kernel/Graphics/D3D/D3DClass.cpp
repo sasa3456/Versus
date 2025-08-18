@@ -151,4 +151,48 @@ namespace VE_Kernel
         ReturnFalseIfFail(hr_, "D3D11 Failed to initialize sampler state.");
         return true;
     }
+	
+	 bool D3DClass::InitializeViewport(HWND viewport_hwnd, uint16_t width, uint16_t height)
+    {
+        // 1. Создание цепочки обмена для области просмотра
+        DXGI_SWAP_CHAIN_DESC scd = {0};
+        scd.BufferDesc.Width = width;
+        scd.BufferDesc.Height = height;
+        scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        scd.BufferDesc.RefreshRate.Numerator = 60;
+        scd.BufferDesc.RefreshRate.Denominator = 1;
+        scd.SampleDesc.Count = 1;
+        scd.SampleDesc.Quality = 0;
+        scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+        scd.BufferCount = 1;
+        scd.OutputWindow = viewport_hwnd;
+        scd.Windowed = TRUE;
+        scd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+
+        // Получаем фабрику DXGI от основного устройства
+        Microsoft::WRL::ComPtr<IDXGIDevice> dxgiDevice;
+        HRESULT hr = device_.As(&dxgiDevice);
+        ReturnFalseIfFail(hr, "Failed to get DXGI Device.");
+
+        Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
+        hr = dxgiDevice->GetAdapter(&dxgiAdapter);
+        ReturnFalseIfFail(hr, "Failed to get DXGI Adapter.");
+
+        Microsoft::WRL::ComPtr<IDXGIFactory> dxgiFactory;
+        hr = dxgiAdapter->GetParent(__uuidof(IDXGIFactory), &dxgiFactory);
+        ReturnFalseIfFail(hr, "Failed to get DXGI Factory.");
+
+        hr = dxgiFactory->CreateSwapChain(device_.Get(), &scd, &viewport_swapchain_);
+        ReturnFalseIfFail(hr, "D3D11 Viewport Swapchain creation failed.");
+
+        // 2. Создание вида цели рендеринга для области просмотра
+        Microsoft::WRL::ComPtr<ID3D11Texture2D> back_buffer;
+        hr = viewport_swapchain_->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)back_buffer.GetAddressOf());
+        ReturnFalseIfFail(hr, "D3D11 Viewport backbuffer retrieval failed.");
+
+        hr = device_->CreateRenderTargetView(back_buffer.Get(), NULL, &viewport_render_target_view_);
+        ReturnFalseIfFail(hr, "D3D11 Failed to create viewport render target view.");
+
+        return true;
+    }
 } // namespace VE_Kernel

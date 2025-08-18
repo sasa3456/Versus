@@ -17,6 +17,9 @@ namespace VE_Kernel
     {
     public:
         bool Initialize(Window* window_a);
+        // --- НОВЫЙ МЕТОД ---
+        // Инициализирует ресурсы рендеринга для отдельного окна (области просмотра)
+        bool InitializeViewport(HWND viewport_hwnd, uint16_t width, uint16_t height);
 
     public:
         Microsoft::WRL::ComPtr<ID3D11Device> device_;
@@ -28,6 +31,10 @@ namespace VE_Kernel
         Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depth_stencil_state_;
         Microsoft::WRL::ComPtr<ID3D11RasterizerState> rasterizer_state_;
         Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler_state_;
+
+        // --- НОВЫЕ ЧЛЕНЫ ДЛЯ ОБЛАСТИ ПРОСМОТРА ---
+        Microsoft::WRL::ComPtr<IDXGISwapChain> viewport_swapchain_;
+        Microsoft::WRL::ComPtr<ID3D11RenderTargetView> viewport_render_target_view_;
 
     private:
         bool _InitializeDeviceAndSwapchain();
