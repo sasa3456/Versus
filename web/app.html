@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Versus — 3D Editor (Bootstrap адаптация)</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+  <div class="vs-container">
+    <div class="vs-topbar vs-fade-up">
+      <div class="d-flex align-items-center gap-4 w-100">
+        <div class="d-flex align-items-center">
+          <div class="vs-logo me-2">V</div>
+          <div>
+            <div class="vs-app-title">Versus</div>
+            <div class="vs-app-sub" style="margin-right: 10px;">3D Game Builder — Прототип</div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-2">
+          <div class="dropdown">
+            <button style="margin-right: 10px;" class="vs-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 1.5H9.5L14 6V14.5H4V1.5Z" stroke="currentColor" stroke-linejoin="round"></path><path d="M9 1.5V6H14" stroke="currentColor" stroke-linejoin="round"></path></svg>
+              Файл
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">Новый</a></li>
+              <li><a class="dropdown-item" href="#">Открыть</a></li>
+              <li><a class="dropdown-item" href="#">Сохранить как</a></li>
+              <li><a class="dropdown-item" href="#">Собрать</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="#">Выйти</a></li>
+            </ul>
+          </div>
+          <button style="margin-right: 10px;" class="vs-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Назад (Ctrl+Z)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 7.5H10.5C12.1569 7.5 13.5 8.84315 13.5 10.5V10.5C13.5 12.1569 12.1569 13.5 10.5 13.5H9.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 5L3.5 7.5L6 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Назад
+          </button>
+          <button style="margin-right: 10px;" class="vs-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Повторить (Ctrl+Y)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 7.5H5.5C3.84315 7.5 2.5 8.84315 2.5 10.5V10.5C2.5 12.1569 3.84315 13.5 5.5 13.5H6.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 5L12.5 7.5L10 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Повторить
+          </button>
+          <button style="margin-right: 10px;" class="vs-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Открыть доступ к проекту">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 6.5L13.5 4L11 1.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.5 12.5H10C11.3807 12.5 12.5 11.3807 12.5 10V4" stroke="currentColor" stroke-linecap="round"></path><path d="M12 14.5H3.5C2.94772 14.5 2.5 14.0523 2.5 13.5V3.5C2.5 2.94772 2.94772 2.5 3.5 2.5H7" stroke="currentColor" stroke-linecap="round"></path></svg>
+            Открыть доступ
+          </button>
+        </div>
+        <div class="ms-auto d-flex align-items-center">
+            <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Настройки">
+                <button class="vs-btn" data-bs-toggle="modal" data-bs-target="#settingsModal" style="margin-right: 10px;">
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M8.00008 10.5833C9.4277 10.5833 10.5834 9.42762 10.5834 8C10.5834 6.57229 9.4277 5.41663 8.00008 5.41663C6.57238 5.41663 5.41675 6.57229 5.41675 8C5.41675 9.42762 6.57238 10.5833 8.00008 10.5833Z" stroke="currentColor" stroke-linejoin="round"></path>
+                    <path d="M8 1.5V3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M3.70667 3.70663L4.77333 4.77329" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M1.5 8H3" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M3.70667 12.2933L4.77333 11.2266" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M8 14.5V13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M12.2933 12.2933L11.2267 11.2266" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M14.5 8H13" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M12.2933 3.70663L11.2267 4.77329" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </button>
+            </span>
+            <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Закрыть проект">
+      <button class="vs-btn" id="close-button" style="margin-right: 10px;">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L4 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4 4L12 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </button>
+    </span>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="row flex-grow-1 g-3">
+      <div class="col-md-3 col-lg-2 vs-sidebar-col">
+        <div class="vs-sidebar vs-fade-up">
+          <div class="d-flex gap-2">
+            <input class="vs-input" style="margin-right: 20px;" placeholder="Поиск...">
+            <button class="vs-btn">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3.5V12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3.5 8H12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+          </div>
+
+          <div class="vs-section-title" style="margin-top: 20px;" >Объекты сцены</div>
+          <div class="vs-tree">
+            <div class="vs-tree-item">
+              <div class="vs-icon" style="margin-right: 10px;" >SC</div>
+              <div>
+                <div>Scene Root</div>
+                <div class="vs-muted" style="font-size:12px">3 objects</div>
+              </div>
+            </div>
+            <div class="vs-tree-item">
+              <div class="vs-icon" style="margin-right: 10px;" >CM</div>
+              <div>
+                <div>Camera_Main</div>
+                <div class="vs-muted" style="font-size:12px">Perspective 60°</div>
+              </div>
+            </div>
+            <div class="vs-tree-item">
+              <div class="vs-icon" style="margin-right: 10px;" >LG</div>
+              <div>
+                <div>Directional Light</div>
+                <div class="vs-muted" style="font-size:12px">Intensity 1.0</div>
+              </div>
+            </div>
+            <div class="vs-tree-divider"></div>
+            <div class="vs-tree-item">
+              <div class="vs-icon" style="margin-right: 10px;" >CB</div>
+              <div>
+                <div>Cube_01</div>
+                <div class="vs-muted" style="font-size:12px">Mesh / Material</div>
+              </div>
+            </div>
+            <div class="vs-tree-item">
+              <div class="vs-icon" style="margin-right: 10px;" >PL</div>
+              <div>
+                <div>Plane_Ground</div>
+                <div class="vs-muted" style="font-size:12px">Static</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-auto">
+            <div class="vs-muted" style="font-size:12px">Autosave: 2m ago</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-8">
+        <div class="vs-viewport-panel vs-fade-up h-100">
+          <div class="d-flex gap-3">
+            <div class="d-flex gap-2">
+             
+            </div>
+            <div class="vs-play-toggle mx-auto">
+                <button class="vs-btn active" style="margin-right: 10px;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 2.5L12.5 8L4.5 13.5V2.5Z" stroke="currentColor" stroke-linejoin="round"></path></svg>
+                    Запуск
+                </button>
+                <button class="vs-btn" style="margin-right: 10px;">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 2.5L11.5 5.5L8.5 8.5L5.5 13.5L2.5 10.5L5.5 2.5Z" stroke="currentColor" stroke-linejoin="round"></path><path d="M10.5 13.5L13.5 10.5L8.5 8.5" stroke="currentColor" stroke-linejoin="round"></path></svg>
+                    Ноды
+                </button>
+            </div>
+          </div>
+
+          <div class="vs-viewport-canvas">
+    
+    <div class="vs-viewport-tools">
+        <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Move Tool (W)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5V14.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M1.5 8H14.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 3.5L8 1.5L6 3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 12.5L8 14.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12.5 6L14.5 8L12.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3.5 6L1.5 8L3.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+        <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Rotate Tool (E)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 6.00004C13.1905 7.15243 13.5 8.5434 13.5 10C13.5 12.9261 11.2394 15 8.5 15C5.99201 15 3.86433 13.2124 3.5638 10.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.5 6H12.5V8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </button>
+        <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Scale Tool (R)">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 12.5V3.5H12.5V12.5H3.5Z" stroke="currentColor" stroke-linejoin="round"></path><path d="M1.5 1.5H5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 1.5V5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 1.5H10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 1.5V5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 14.5H5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 14.5V10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 14.5H10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 14.5V10.5" stroke="currentColor" stroke-linecap="round"></path></svg>
+        </button>
+    </div>
+
+    <div class="vs-viewport-grid"></div>
+    <div class="vs-gizmo">3D Вьюпорт</div>
+  </div>
+        </div>
+      </div>
+
+      <div class="col-md-3 col-lg-2 vs-inspector-col">
+        <div class="vs-inspector vs-fade-up">
+          <ul class="nav nav-tabs">
+            <li class="nav-item">
+              <a class="nav-link active" data-bs-toggle="tab" href="#inspector-tab">Инспектор</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-bs-toggle="tab" href="#layers-tab">Мир</a>
+            </li>
+          </ul>
+          <div class="tab-content flex-grow-1 pt-3">
+            <div class="tab-pane fade show active" id="inspector-tab">
+              <div class="accordion" id="inspectorAccordion">
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTransform" style="margin-right: 10px;">
+                      Трансформация
+                    </button>
+                  </h2>
+                  <div id="collapseTransform" class="accordion-collapse collapse show" data-bs-parent="#inspectorAccordion">
+                    <div class="accordion-body">
+                      <div class="vs-prop">
+                        <input class="vs-input" style="margin-top: 10px;" value="Позиция: 0, 0, 0">
+                        <input class="vs-input" style="margin-top: 10px;" value="Поворот: 0, 0, 0">
+                        <input class="vs-input" style="margin-top: 10px;" value="Размер: 1, 1, 1">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="accordion-item">
+                  <h2 class="accordion-header">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMaterial" style="margin-right: 10px;">
+                      Материал
+                    </button>
+                  </h2>
+                  <div id="collapseMaterial" class="accordion-collapse collapse" data-bs-parent="#inspectorAccordion">
+                    <div class="accordion-body">
+                      <div class="vs-prop">
+                        <select class="vs-input">
+                          <option>Default / PBR</option>
+                          <option>Metal</option>
+                          <option>Plastic</option>
+                        </select>
+                        <input class="vs-input" type="range" min="0" max="1" step="0.01" value="0.75">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="tab-pane fade" id="layers-tab">
+              <p class="vs-muted p-2">Здесь будет панель управления миром.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="vs-bottom-panel vs-fade-up">
+        <div class="vs-assets">
+            <div class="d-flex flex-column gap-2">
+              <div class="vs-section-title">Assets</div>
+              <div class="d-flex gap-2">
+                <div class="vs-asset-item">Cube</div>
+                <div class="vs-asset-item">Sphere</div>
+                <div class="vs-asset-item">Plane</div>
+                <div class="vs-asset-item">Light</div>
+              </div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" style="margin-right: 10px;"></button>
+        </div>
+        <div class="modal-body">
+          <p class="vs-muted">Здесь будут настройки редактора.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="vs-btn" data-bs-dismiss="modal" style="margin-right: 10px;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4L4 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4 4L12 12" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Close
+          </button>
+          <button type="button" class="vs-btn primary" style="margin-right: 10px;">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L6 12L13.5 4.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            Save changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
