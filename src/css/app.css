@@ -1,3 +1,50 @@
+/* Основной контейнер вьюпорта — растянуть и запретить текстовый выбор/скролл по умолчанию */
+#viewport-container {
+  position: relative;    /* важно для абсолютного позиционирования canvas/ui */
+  width: 100%;
+  height: 100%;          /* или конкретная высота, например 600px */
+  overflow: hidden;
+  touch-action: none;    /* отключает системную обработку жестов (потр./пан/зум) */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Canvas renderer'а — растянуть на весь контейнер и принимать указатели */
+#viewport-container canvas,
+#viewport-container > canvas {
+  position: absolute;
+  inset: 0;              /* top:0; right:0; bottom:0; left:0; */
+  width: 100% !important;
+  height: 100% !important;
+  display: block;        /* избавляет от лишних gap при inline */
+  pointer-events: auto;  /* гарантируем, что canvas принимает события */
+  touch-action: none;    /* еще раз — важно для сенсорных устройств */
+  cursor: grab;          /* визуальная подсказка, что можно перетаскивать */
+}
+
+/* Курсор при перетягивании (добавляем/убираем класс 'grabbing' из JS при drag) */
+#viewport-container.grabbing canvas,
+#viewport-container canvas:active {
+  cursor: grabbing;
+}
+
+/* Если у вас есть overlay/popup который должен НЕ мешать кликам в canvas,
+   например превью-изображение, поставьте ему pointer-events:none.
+   Если overlay должен принимать клики — наоборот pointer-events:auto. */
+.viewport-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none; /* пропускает клики к canvas снизу */
+}
+
+/* Убедимся, что HTML/Body позволяют 100% высоту (если контейнер 100%): */
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
 
    body { -webkit-user-select: none; }
    .enable { -webkit-user-select: text; }
@@ -190,7 +237,7 @@ input {
     .vs-viewport-canvas {
       flex: 1;
       border-radius: 10px;
-      background: #000000;
+      background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -534,3 +581,38 @@ input {
 .accordion-body .vs-input {
   color: #fff;
 }
+
+    .vs-assets {
+      flex: 1;
+      background: linear-gradient(180deg,var(--soft), rgba(255,255,255,0.01));
+      border-radius: var(--radius-sm);
+      padding: 10px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .vs-asset-item {
+      width: 84px;
+      height: 84px;
+      border-radius: 10px;
+      background: linear-gradient(180deg,#161718,#121314);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      border: 1px solid rgba(255,255,255,0.02);
+      transition: all .15s;
+    }
+
+    .vs-asset-item:hover {
+      border-color: rgba(255,255,255,0.06);
+      color: #fff;
+    }
+
+    .vs-asset-item:active {
+      background: rgba(255,255,255,0.04);
+    }

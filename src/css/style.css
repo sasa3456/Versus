@@ -1,0 +1,59 @@
+/* css/style.css */
+
+/* Custom Scrollbar for Inspector/World Panels */
+.vs-inspector .tab-content, .vs-sidebar .vs-tree {
+    scrollbar-width: thin;
+    scrollbar-color: #4f5561 #2a2f36;
+}
+
+.vs-inspector .tab-content::-webkit-scrollbar,
+.vs-sidebar .vs-tree::-webkit-scrollbar {
+    width: 8px;
+}
+
+.vs-inspector .tab-content::-webkit-scrollbar-track,
+.vs-sidebar .vs-tree::-webkit-scrollbar-track {
+    background: #2a2f36;
+    border-radius: 10px;
+}
+
+.vs-inspector .tab-content::-webkit-scrollbar-thumb,
+.vs-sidebar .vs-tree::-webkit-scrollbar-thumb {
+    background-color: #4f5561;
+    border-radius: 10px;
+    border: 2px solid #2a2f36;
+}
+
+.vs-inspector .tab-content::-webkit-scrollbar-thumb:hover,
+.vs-sidebar .vs-tree::-webkit-scrollbar-thumb:hover {
+    background-color: #6c757d;
+}
+
+/* Ensure the panels can actually scroll */
+.vs-inspector .tab-pane {
+    height: calc(100vh - 250px); /* Adjust as needed */
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.vs-sidebar .vs-tree {
+    height: calc(100vh - 280px); /* Adjust as needed */
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.vs-prop {
+    margin-bottom: 1rem;
+}
+
+.vs-prop label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.8rem;
+    color: #adb5bd;
+}
+
+/* Ensure tooltips are visible above the UI */
+.tooltip {
+    z-index: 1080;
+}
