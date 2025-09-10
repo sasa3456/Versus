@@ -15,6 +15,73 @@
       }
     }
   </script>
+  <style>
+    .viewport-top-left {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      z-index: 100;
+    }
+    .viewport-bottom-left {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 100;
+    }
+    .viewcube-container {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    #viewcube {
+      width: 64px;
+      height: 64px;
+      perspective: 400px;
+      cursor: grab;
+    }
+    #viewcube:active {
+        cursor: grabbing;
+    }
+
+    #viewcube-scene {
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+      transition: transform 0.4s ease-out;
+    }
+
+    .viewcube-face {
+      position: absolute;
+      width: 64px;
+      height: 64px;
+      background-color: rgba(42, 47, 54, 0.8);
+      border: 1px solid rgba(116, 192, 252, 0.5);
+      color: #e0e0e0;
+      font-size: 12px;
+      font-weight: bold;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .viewcube-face:not(.no-hover):hover {
+      background-color: rgba(60, 66, 75, 0.9);
+      border-color: #74c0fc;
+    }
+
+    .front  { transform: translateZ(32px); }
+    .back   { transform: rotateY(180deg) translateZ(32px); }
+    .right  { transform: rotateY(90deg) translateZ(32px); }
+    .left   { transform: rotateY(-90deg) translateZ(32px); }
+    .top    { transform: rotateX(90deg) translateZ(32px); }
+    .bottom { transform: rotateX(-90deg) translateZ(32px); }
+  </style>
 </head>
 <body>
   <div class="vs-container d-flex flex-column">
@@ -35,7 +102,7 @@
               Файл
             </button>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#" id="load-model-btn">Загрузить модель (.glb, .gltf)</a></li>
+              <li><a class="dropdown-item" href="#" id="load-model-btn">Загрузить модель (.glb, .gltf, .obj, .fbx)</a></li>
               <li><a class="dropdown-item" href="#" id="load-hdri-btn">Загрузить окружение (.hdr)</a></li>
               <li><a class="dropdown-item" href="#">Новый</a></li>
               <li><a class="dropdown-item" href="#">Открыть</a></li>
@@ -57,7 +124,7 @@
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 6.5L13.5 4L11 1.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.5 12.5H10C11.3807 12.5 12.5 11.3807 12.5 10V4" stroke="currentColor" stroke-linecap="round"></path><path d="M12 14.5H3.5C2.94772 14.5 2.5 14.0523 2.5 13.5V3.5C2.5 2.94772 2.94772 2.5 3.5 2.5H7" stroke="currentColor" stroke-linecap="round"></path></svg>
             Открыть доступ
           </button>
-          <input type="file" id="model-loader-input" style="display: none;" accept=".glb, .gltf">
+          <input type="file" id="model-loader-input" style="display: none;" accept=".glb,.gltf,.fbx,.obj">
           <input type="file" id="hdri-loader-input" style="display: none;" accept=".hdr">
         </div>
         <div class="ms-auto d-flex align-items-center">
@@ -115,6 +182,40 @@
           </div>
 
           <div id="viewport-container" class="vs-viewport-canvas" tabindex="0">
+              <div class="viewport-top-left">
+                <div class="dropdown">
+                    <button class="vs-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Настройки вьюпорта">
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8H13.5" stroke="currentColor" stroke-linecap="round"></path><path d="M2.5 4H13.5" stroke="currentColor" stroke-linecap="round"></path><path d="M2.5 12H13.5" stroke="currentColor" stroke-linecap="round"></path></svg>
+                    </button>
+                    <ul class="dropdown-menu">
+                      <li><h6 class="dropdown-header">Управление</h6></li>
+                      <li><a class="dropdown-item" href="#" id="controls-orbit-btn">Стандартное</a></li>
+                      <li><a class="dropdown-item" href="#" id="controls-game-btn">Игровое (WASD)</a></li>
+                      <li><hr class="dropdown-divider"></li>
+                      <li><h6 class="dropdown-header">Режим просмотра</h6></li>
+                      <li><a class="dropdown-item" href="#" id="view-mode-final-btn">Финальный</a></li>
+                      <li><a class="dropdown-item" href="#" id="view-mode-shaded-btn">Модель</a></li>
+                      <li><a class="dropdown-item" href="#" id="view-mode-wireframe-btn">Сетка</a></li>
+                      <li><a class="dropdown-item" href="#" id="view-mode-transparent-btn">Прозрачность</a></li>
+                    </ul>
+                  </div>
+              </div>
+
+              <div class="viewcube-container">
+                <div id="viewcube">
+                  <div id="viewcube-scene">
+                    <div class="viewcube-face front" data-view="front">ПЕРЕД</div>
+                    <div class="viewcube-face back" data-view="back">СЗАДИ</div>
+                    <div class="viewcube-face right" data-view="right">ПРАВО</div>
+                    <div class="viewcube-face left" data-view="left">ЛЕВО</div>
+                    <div class="viewcube-face top" data-view="top">ВЕРХ</div>
+                    <div class="viewcube-face bottom" data-view="bottom">НИЗ</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="viewport-bottom-left" id="stats-container"></div>
+
               <div class="vs-viewport-tools">
                   <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Move Tool (W)">
                       <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5V14.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M1.5 8H14.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 3.5L8 1.5L6 3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 12.5L8 14.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12.5 6L14.5 8L12.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3.5 6L1.5 8L3.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
@@ -210,7 +311,7 @@
                                 </div>
                                  <div class="vs-prop">
                                     <label>Размытие фона</label>
-                                    <input type="range" id="bg-blur-slider" class="vs-input" min="0" max="1" step="0.01" value="0.2">
+                                    <input type="range" id="bg-blur-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
                                 </div>
                             </div>
                         </div>
@@ -280,7 +381,7 @@
                                 <div class="vs-prop">
                                     <label>Включить</label>
                                     <div class="form-check form-switch ms-auto">
-                                        <input class="form-check-input" type="checkbox" id="cloud-enabled-check" checked>
+                                        <input class="form-check-input" type="checkbox" id="cloud-enabled-check">
                                     </div>
                                 </div>
                                 <div class="vs-prop">
@@ -324,7 +425,7 @@
                             <div class="accordion-body">
                                 <div class="vs-prop">
                                     <label>Сила виньетки</label>
-                                    <input type="range" id="vignette-strength-slider" class="vs-input" min="0" max="2" step="0.01" value="0.5">
+                                    <input type="range" id="vignette-strength-slider" class="vs-input" min="0" max="2" step="0.01" value="0">
                                 </div>
                                 <div class="vs-prop">
                                     <label>Хроматическая аберрация</label>
@@ -343,11 +444,11 @@
                                 </div>
                                 <div class="vs-prop">
                                     <label>Сила</label>
-                                    <input type="range" id="bloom-strength-slider" class="vs-input" min="0" max="3" step="0.01" value="0.5">
+                                    <input type="range" id="bloom-strength-slider" class="vs-input" min="0" max="3" step="0.01" value="0">
                                 </div>
                                 <div class="vs-prop">
                                     <label>Радиус</label>
-                                    <input type="range" id="bloom-radius-slider" class="vs-input" min="0" max="2" step="0.01" value="0.2">
+                                    <input type="range" id="bloom-radius-slider" class="vs-input" min="0" max="2" step="0.01" value="0">
                                 </div>
                             </div>
                         </div>
@@ -400,20 +501,7 @@
                         </div>
                         <div class="vs-prop">
                             <label>Интенсивность</label>
-                            <input type="range" id="lensflare-intensity-slider" class="vs-input" min="0" max="1" step="0.01" value="0.75">
-                        </div>
-                    </div>
-                </div>
-            </div>
-			  <div class="accordion-item">
-                <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseGround">Пол</button></h2>
-                <div id="collapseGround" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                    <div class="accordion-body">
-                        <div class="vs-prop">
-                            <label>Включить</label>
-                            <div class="form-check form-switch ms-auto">
-                                <input class="form-check-input" type="checkbox" id="floor-enabled-check" checked>
-                            </div>
+                            <input type="range" id="lensflare-intensity-slider" class="vs-input" min="0" max="1" step="0.01" value="0">
                         </div>
                     </div>
                 </div>
