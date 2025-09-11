@@ -9,8 +9,8 @@ function createWindow() {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'), // Optional: for secure IPC
       nodeIntegration: false,
-	  contextIsolation: false, // в зависимости от вашего кода
-      devTools: false // <-- Отключаем DevTools для рендерера
+	  //contextIsolation: false, // в зависимости от вашего кода
+      //devTools: false // <-- Отключаем DevTools для рендерера
     },
     icon: path.join(__dirname, 'assets/icon.png') // Optional: add an app icon
   });
