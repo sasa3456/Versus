@@ -1,12 +1,18 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-// "Выставляем" безопасные API в мир рендерера (в ваше веб-приложение)
 contextBridge.exposeInMainWorld('electronAPI', {
-  // API для закрытия окна (уже было у вас)
-  closeWindow: () => ipcRenderer.send('close-window'),
-  
-  // Новое API: отправка координат и размеров вьюпорта в главный процесс
-  sendViewportRect: (rect) => ipcRenderer.send('viewport-rect', rect)
+  // Project management
+  selectDirectory: () => ipcRenderer.invoke('dialog:select-directory'),
+  createProject: (projectPath, projectName) => ipcRenderer.invoke('project:create', projectPath, projectName),
+  openProject: () => ipcRenderer.invoke('project:open'),
+  saveProject: (filePath, content) => ipcRenderer.invoke('project:save', filePath, content),
+
+  closeWindow: () => ipcRenderer.send('window:close'),
+  // Graceful close handling
+  onCloseRequest: (callback) => ipcRenderer.on('on-close-request', callback),
+  onSaveAndQuit: (callback) => ipcRenderer.on('save-and-quit', callback),
+  confirmClose: () => ipcRenderer.invoke('confirm-close'),
+  quitAfterSave: () => ipcRenderer.send('quit-after-save'),
 });
 
 // Этот код можно оставить, если он вам нужен

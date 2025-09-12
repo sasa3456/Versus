@@ -50,6 +50,18 @@ export default class PostprocessingManager {
         
         this.fxaaPass = new ShaderPass(FXAAShader);
         this.composer.addPass(this.fxaaPass);
+        
+        // --- FIX: Listen for selection changes to update the outline ---
+        window.addEventListener('selectionChanged', (e) => {
+            const selectedObject = e.detail.selected;
+            if (selectedObject) {
+                // OutlinePass expects an array of objects
+                this.outlinePass.selectedObjects = [selectedObject];
+            } else {
+                // Clear the outline if nothing is selected
+                this.outlinePass.selectedObjects = [];
+            }
+        });
     }
     
     resize(width, height) {

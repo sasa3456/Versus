@@ -1,246 +1,206 @@
 // js/managers/UIManager.js
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
-import { sanitizeName } from '../utils/helpers.js';
-
 export default class UIManager {
-    constructor({ sceneManager, objectManager, environmentManager, postprocessingManager, controlsManager }) {
+    constructor({ sceneManager, objectManager, environmentManager, postprocessingManager, controlsManager, editor }) {
         this.sceneManager = sceneManager;
         this.objectManager = objectManager;
         this.environmentManager = environmentManager;
         this.postprocessingManager = postprocessingManager;
         this.controlsManager = controlsManager;
-        
-        this.gltfLoader = new GLTFLoader();
-        this.fbxLoader = new FBXLoader();
-        this.objLoader = new OBJLoader();
+        this.editor = editor;
 
-        this.initAllEventListeners();
+        this.initUI();
     }
 
-    initAllEventListeners() {
-        this.initFileLoaders();
-        this.initObjectCreation();
-        this.initTransformTools();
-        this.initWorldSettings();
-        this.initPostprocessingSettings();
-        this.initViewportSettings();
-        this.initInspector();
-		this.initSelectionOutline();
-    }
-	
-	initSelectionOutline() {
-        window.addEventListener('selectionChanged', (e) => {
-            const selectedObject = e.detail.selected;
-            if (selectedObject) {
-                this.postprocessingManager.outlinePass.selectedObjects = [selectedObject];
-            } else {
-                this.postprocessingManager.outlinePass.selectedObjects = [];
-            }
-        });
+    initUI() {
+        this.bindSceneObjectControls();
+        this.bindWorldControls();
+        this.bindViewportControls();
+        this.bindInspector();
+        this.bindUndoRedo();
+
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
     }
     
-    // --- File I/O ---
-    initFileLoaders() {
-        const modelInput = document.getElementById('model-loader-input');
-        document.getElementById('load-model-btn')?.addEventListener('click', () => modelInput.click());
-        modelInput?.addEventListener('change', (e) => this.onModelLoad(e));
+    bindUndoRedo() {
+        this.undoBtn = document.getElementById('undo-btn');
+        this.redoBtn = document.getElementById('redo-btn');
+
+        this.undoBtn.addEventListener('click', () => this.editor.undo());
+        this.redoBtn.addEventListener('click', () => this.editor.redo());
         
-        const hdriInput = document.getElementById('hdri-loader-input');
-        document.getElementById('load-hdri-btn')?.addEventListener('click', () => hdriInput.click());
-        hdriInput?.addEventListener('change', (e) => {
-             const file = e.target.files?.[0];
-             if (file) {
-                 const url = URL.createObjectURL(file);
-                 this.environmentManager.loadHDRI(url);
-                 URL.revokeObjectURL(url);
-                 hdriInput.value = '';
-             }
-        });
+        this.updateUndoRedoButtons();
     }
 
-    onModelLoad(event) {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        const url = URL.createObjectURL(file);
-        const extension = file.name.split('.').pop().toLowerCase();
-        
-        const onLoad = (object, animations) => {
-            object.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
-            object.name = sanitizeName(file.name);
-            
-            if (animations && animations.length) {
-                const mixer = new THREE.AnimationMixer(object);
-                mixer.clipAction(animations[0]).play();
-                this.objectManager.mixers.push(mixer);
-                object.userData.mixer = mixer;
-            }
-
-            this.objectManager.scene.add(object);
-            this.objectManager.registerSceneObject(object);
-            this.objectManager.cacheOriginalMaterials(object);
-            this.objectManager.setSelected(object);
-            URL.revokeObjectURL(url);
-        };
-        const onError = (error) => { console.error(error); alert('Не удалось загрузить модель.'); URL.revokeObjectURL(url); };
-
-        switch (extension) {
-            case 'glb': case 'gltf': this.gltfLoader.load(url, (gltf) => onLoad(gltf.scene, gltf.animations), undefined, onError); break;
-            case 'fbx': this.fbxLoader.load(url, (fbx) => onLoad(fbx, fbx.animations), undefined, onError); break;
-            case 'obj': this.objLoader.load(url, (obj) => onLoad(obj, []), undefined, onError); break;
-            default: alert(`Ошибка: неподдерживаемый формат .${extension}`); URL.revokeObjectURL(url); break;
-        }
-        event.target.value = '';
+    updateUndoRedoButtons() {
+        if (!this.undoBtn || !this.redoBtn) return;
+        this.undoBtn.disabled = this.editor.undoStack.length === 0;
+        this.redoBtn.disabled = this.editor.redoStack.length === 0;
     }
 
-    // --- Scene & Objects ---
-    initObjectCreation() {
+    bindSceneObjectControls() {
         document.querySelectorAll('.add-primitive-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.objectManager.add(e.currentTarget.dataset.primitiveType, 'primitive');
+                this.objectManager.add(e.target.dataset.primitiveType, 'primitive');
             });
         });
+        
         document.querySelectorAll('.add-light-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                this.objectManager.add(e.currentTarget.dataset.lightType, 'light');
+                this.objectManager.add(e.target.dataset.lightType, 'light');
             });
         });
-         window.addEventListener('keydown', (e) => {
-            if (e.target.tagName === 'INPUT') return;
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                this.objectManager.remove(this.objectManager.selected);
-            }
-        });
     }
-    
-    initTransformTools() {
-        const [moveBtn, rotBtn, scaleBtn] = [...document.querySelectorAll('.vs-viewport-tools .vs-btn')];
-        const setActiveTool = (btn) => { [moveBtn, rotBtn, scaleBtn].forEach(b => b.classList.remove('active')); btn.classList.add('active'); };
-        
-        moveBtn?.addEventListener('click', () => { this.controlsManager.transform.setMode('translate'); setActiveTool(moveBtn); });
-        rotBtn?.addEventListener('click', () => { this.controlsManager.transform.setMode('rotate'); setActiveTool(rotBtn); });
-        scaleBtn?.addEventListener('click', () => { this.controlsManager.transform.setMode('scale'); setActiveTool(scaleBtn); });
 
-        window.addEventListener('keydown', (e) => {
-             if (e.target.tagName === 'INPUT' || this.controlsManager.pointerLock.isLocked) return;
-             switch(e.key.toLowerCase()) {
-                case 'w': moveBtn.click(); break;
-                case 'e': rotBtn.click(); break;
-                case 'r': scaleBtn.click(); break;
-            }
-        });
-        
-        moveBtn.click(); // Устанавливаем по умолчанию
-    }
-    
-    initInspector() {
-        // Мы не можем объявить `light` здесь, так как `selected` меняется.
-        // Вместо этого мы будем получать актуальный выбранный объект внутри обработчика.
-        const getSelectedLight = () => {
-            const selected = this.objectManager.selected;
-            return (selected && selected.isLight) ? selected : null;
+    bindWorldControls() {
+        const addListener = (id, event, callback) => {
+            document.getElementById(id).addEventListener(event, e => {
+                callback(e.target);
+                this.editor.isDirty = true;
+            });
         };
 
-        document.getElementById('light-color-input')?.addEventListener('input', e => {
-            const light = getSelectedLight();
-            if (light) light.color.set(e.target.value);
-        });
-        document.getElementById('light-intensity-slider')?.addEventListener('input', e => {
-            const light = getSelectedLight();
-            if (light) {
-                light.intensity = parseFloat(e.target.value);
-                document.getElementById('light-intensity-number').value = e.target.value;
-            }
-        });
-        document.getElementById('light-intensity-number')?.addEventListener('input', e => {
-            const light = getSelectedLight();
-            if (light) {
-                light.intensity = parseFloat(e.target.value);
-                document.getElementById('light-intensity-slider').value = e.target.value;
-            }
-        });
-        document.getElementById('light-shadow-check')?.addEventListener('change', e => {
-            const light = getSelectedLight();
-            if (light) light.castShadow = e.target.checked;
-        });
-    }
+        // Sun
+        addListener('sun-x-slider', 'input', el => this.environmentManager.sun.position.x = parseFloat(el.value));
+        addListener('sun-y-slider', 'input', el => this.environmentManager.sun.position.y = parseFloat(el.value));
+        addListener('sun-z-slider', 'input', el => this.environmentManager.sun.position.z = parseFloat(el.value));
+        addListener('sun-intensity-slider', 'input', el => this.environmentManager.sun.intensity = parseFloat(el.value));
+        addListener('sun-shadow-check', 'change', el => this.environmentManager.sun.castShadow = el.checked);
+        
+        // IBL & Background
+        addListener('ibl-intensity-slider', 'input', el => this.sceneManager.scene.environmentIntensity = parseFloat(el.value));
+        addListener('bg-blur-slider', 'input', el => this.sceneManager.scene.backgroundBlurriness = parseFloat(el.value));
+        addListener('skybox-mode-select', 'change', el => this.updateSkyboxMode(el.value));
+        addListener('skybox-color-input', 'input', () => this.updateSkyboxMode('color'));
+        addListener('skybox-gradient-top-input', 'input', () => this.updateSkyboxMode('gradient'));
+        addListener('skybox-gradient-bottom-input', 'input', () => this.updateSkyboxMode('gradient'));
+        
+        // Fog
+        addListener('fog-color-input', 'input', el => this.environmentManager.fog.color.set(el.value));
+        addListener('fog-density-slider', 'input', el => this.environmentManager.fog.density = parseFloat(el.value));
 
-    // --- World & Environment ---
-    initWorldSettings() {
-        const scene = this.sceneManager.scene;
-        const sun = this.environmentManager.sun;
-        const lensflare = this.environmentManager.lensflare;
-        const fog = this.environmentManager.fog;
-        const clouds = this.environmentManager.clouds;
+        // Bloom
+        addListener('bloom-enabled-check', 'change', el => this.postprocessingManager.bloomPass.enabled = el.checked);
+        addListener('bloom-threshold-slider', 'input', el => this.postprocessingManager.bloomPass.threshold = parseFloat(el.value));
+        addListener('bloom-strength-slider', 'input', el => this.postprocessingManager.bloomPass.strength = parseFloat(el.value));
+        addListener('bloom-radius-slider', 'input', el => this.postprocessingManager.bloomPass.radius = parseFloat(el.value));
+        
+        // Post-processing
+        addListener('vignette-strength-slider', 'input', el => this.postprocessingManager.vignettePass.uniforms.strength.value = parseFloat(el.value));
+        addListener('chromatic-aberation-amount-slider', 'input', el => this.postprocessingManager.chromaticAberrationPass.uniforms.amount.value = parseFloat(el.value));
 
-        document.getElementById('ibl-intensity-slider')?.addEventListener('input', e => scene.environmentIntensity = parseFloat(e.target.value));
-      const bgBlurSlider = document.getElementById('bg-blur-slider');
-        if (bgBlurSlider) {
-            bgBlurSlider.value = scene.backgroundBlurriness; // Устанавливаем значение из сцены
-            bgBlurSlider.addEventListener('input', e => scene.backgroundBlurriness = parseFloat(e.target.value));
-        }
+        // Outline
+        addListener('outline-enabled-check', 'change', el => this.postprocessingManager.outlinePass.enabled = el.checked);
+        addListener('outline-thickness-slider', 'input', el => this.postprocessingManager.outlinePass.edgeStrength = parseFloat(el.value));
+        addListener('outline-color-input', 'input', el => this.postprocessingManager.outlinePass.visibleEdgeColor.set(el.value));
+
+        // Lensflare
+        addListener('lensflare-enabled-check', 'change', el => this.environmentManager.lensflare.visible = el.checked);
         
-        document.getElementById('sun-x-slider')?.addEventListener('input', e => { sun.position.x = parseFloat(e.target.value); lensflare.position.copy(sun.position); });
-        document.getElementById('sun-y-slider')?.addEventListener('input', e => { sun.position.y = parseFloat(e.target.value); lensflare.position.copy(sun.position); });
-        document.getElementById('sun-z-slider')?.addEventListener('input', e => { sun.position.z = parseFloat(e.target.value); lensflare.position.copy(sun.position); });
-        document.getElementById('sun-intensity-slider')?.addEventListener('input', e => sun.intensity = parseFloat(e.target.value));
-        document.getElementById('sun-shadow-check')?.addEventListener('change', e => sun.castShadow = e.target.checked);
-        
-        document.getElementById('fog-color-input')?.addEventListener('input', e => fog.color.set(e.target.value));
-        document.getElementById('fog-density-slider')?.addEventListener('input', e => fog.density = parseFloat(e.target.value));
-        
-        const skyboxModeSelect = document.getElementById('skybox-mode-select');
-        skyboxModeSelect?.addEventListener('change', (e) => this.updateSkybox(e.target.value));
-        document.getElementById('skybox-color-input')?.addEventListener('input', () => this.updateSkybox('color'));
-        document.getElementById('skybox-gradient-top-input')?.addEventListener('input', () => this.updateSkybox('gradient'));
-        document.getElementById('skybox-gradient-bottom-input')?.addEventListener('input', () => this.updateSkybox('gradient'));
-        
-        if (clouds && clouds.material) {
-            document.getElementById('cloud-enabled-check')?.addEventListener('change', e => clouds.visible = e.target.checked);
-            document.getElementById('cloud-speed-slider')?.addEventListener('input', e => clouds.material.uniforms.u_speed.value = parseFloat(e.target.value));
-            // ... и так далее для всех слайдеров облаков
-        }
+        // Clouds
+        addListener('cloud-enabled-check', 'change', el => this.environmentManager.clouds.visible = el.checked);
+        addListener('cloud-speed-slider', 'input', el => this.environmentManager.clouds.material.uniforms.u_speed.value = parseFloat(el.value));
+        addListener('cloud-density-slider', 'input', el => this.environmentManager.clouds.material.uniforms.u_density.value = parseFloat(el.value));
     }
     
-    updateSkybox(mode) {
+    /**
+     * Updates all world and post-processing settings and their UI from a saved state object.
+     * @param {object} state - The full state object from a project file.
+     */
+    updateAllFromState(state) {
+        if (!state) return;
+        
+        const { environment, postprocessing } = state;
+        const setValue = (id, value, isChecked = false) => {
+            const el = document.getElementById(id);
+            if (el) {
+                if (isChecked) el.checked = value;
+                else el.value = value;
+                el.dispatchEvent(new Event(el.type === 'checkbox' ? 'change' : 'input'));
+            }
+        };
+
+        if (environment) {
+            setValue('sun-x-slider', environment.sunPosX);
+            setValue('sun-y-slider', environment.sunPosY);
+            setValue('sun-z-slider', environment.sunPosZ);
+            setValue('sun-intensity-slider', environment.sunIntensity);
+            setValue('sun-shadow-check', environment.sunShadow, true);
+            setValue('ibl-intensity-slider', environment.iblIntensity);
+            setValue('bg-blur-slider', environment.bgBlur);
+            setValue('fog-color-input', `#${environment.fogColor.toString(16).padStart(6, '0')}`);
+            setValue('fog-density-slider', environment.fogDensity);
+            setValue('lensflare-enabled-check', environment.lensflareEnabled, true);
+            setValue('cloud-enabled-check', environment.cloudsEnabled, true);
+            setValue('cloud-speed-slider', environment.cloudSpeed);
+            setValue('cloud-density-slider', environment.cloudDensity);
+        }
+
+        if (postprocessing) {
+            setValue('bloom-enabled-check', postprocessing.bloomEnabled, true);
+            setValue('bloom-threshold-slider', postprocessing.bloomThreshold);
+            setValue('bloom-strength-slider', postprocessing.bloomStrength);
+            setValue('bloom-radius-slider', postprocessing.bloomRadius);
+            setValue('vignette-strength-slider', postprocessing.vignetteStrength);
+            setValue('chromatic-aberation-amount-slider', postprocessing.chromaticAberration);
+            setValue('outline-enabled-check', postprocessing.outlineEnabled, true);
+            setValue('outline-thickness-slider', postprocessing.outlineThickness);
+            setValue('outline-color-input', `#${postprocessing.outlineColor.toString(16).padStart(6, '0')}`);
+        }
+    }
+
+    updateSkyboxMode(mode) {
         const values = {
             color: document.getElementById('skybox-color-input').value,
             top: document.getElementById('skybox-gradient-top-input').value,
-            bottom: document.getElementById('skybox-gradient-bottom-input').value
+            bottom: document.getElementById('skybox-gradient-bottom-input').value,
         };
-        this.environmentManager.setSkyboxMode(mode, values);
+        this.environmentManager.setSkyboxMode(mode || 'hdri', values);
+        this.editor.isDirty = true;
     }
 
-    // --- Post-Processing ---
-    initPostprocessingSettings() {
-        const pp = this.postprocessingManager;
-        document.getElementById('bloom-enabled-check')?.addEventListener('change', e => pp.bloomPass.enabled = e.target.checked);
-        document.getElementById('bloom-threshold-slider')?.addEventListener('input', e => pp.bloomPass.threshold = parseFloat(e.target.value));
-        document.getElementById('bloom-strength-slider')?.addEventListener('input', e => pp.bloomPass.strength = parseFloat(e.target.value));
-        document.getElementById('bloom-radius-slider')?.addEventListener('input', e => pp.bloomPass.radius = parseFloat(e.target.value));
-        
-        document.getElementById('vignette-strength-slider')?.addEventListener('input', e => pp.vignettePass.uniforms.strength.value = parseFloat(e.target.value));
-        document.getElementById('chromatic-aberation-amount-slider')?.addEventListener('input', e => pp.chromaticAberrationPass.uniforms.amount.value = parseFloat(e.target.value));
-        
-        document.getElementById('outline-enabled-check')?.addEventListener('change', e => pp.outlinePass.enabled = e.target.checked);
-        document.getElementById('outline-thickness-slider')?.addEventListener('input', e => pp.outlinePass.edgeThickness = parseFloat(e.target.value));
-        document.getElementById('outline-color-input')?.addEventListener('input', e => pp.outlinePass.visibleEdgeColor.set(e.target.value));
-        
-        document.getElementById('lensflare-enabled-check')?.addEventListener('change', e => this.environmentManager.lensflare.visible = e.target.checked);
+    bindViewportControls() {
+        document.getElementById('controls-orbit-btn').addEventListener('click', () => this.controlsManager.setControlType('orbit'));
+        document.getElementById('controls-game-btn').addEventListener('click', () => this.controlsManager.setControlType('game'));
+        document.getElementById('view-mode-final-btn').addEventListener('click', () => this.objectManager.setViewMode('final'));
+        document.getElementById('view-mode-shaded-btn').addEventListener('click', () => this.objectManager.setViewMode('shaded'));
+        document.getElementById('view-mode-wireframe-btn').addEventListener('click', () => this.objectManager.setViewMode('wireframe'));
+        document.getElementById('view-mode-transparent-btn').addEventListener('click', () => this.objectManager.setViewMode('transparent'));
     }
     
-    // --- Viewport ---
-    initViewportSettings() {
-        document.getElementById('controls-orbit-btn')?.addEventListener('click', () => this.controlsManager.setControlType('orbit'));
-        document.getElementById('controls-game-btn')?.addEventListener('click', () => this.controlsManager.setControlType('game'));
+    bindInspector() {
+        window.addEventListener('selectionChanged', (e) => {
+            const selected = e.detail.selected;
+            if (selected?.isLight) {
+                document.getElementById('light-color-input').value = '#' + selected.color.getHexString();
+                document.getElementById('light-intensity-slider').value = selected.intensity;
+                document.getElementById('light-intensity-number').value = selected.intensity;
+                document.getElementById('light-shadow-check').checked = selected.castShadow;
+            }
+        });
         
-        document.getElementById('view-mode-final-btn')?.addEventListener('click', () => this.objectManager.setViewMode('final'));
-        document.getElementById('view-mode-shaded-btn')?.addEventListener('click', () => this.objectManager.setViewMode('shaded'));
-        document.getElementById('view-mode-wireframe-btn')?.addEventListener('click', () => this.objectManager.setViewMode('wireframe'));
-        document.getElementById('view-mode-transparent-btn')?.addEventListener('click', () => this.objectManager.setViewMode('transparent'));
+        const addDirtyListener = (id, event, callback) => {
+             document.getElementById(id).addEventListener(event, e => {
+                if (this.objectManager.selected) {
+                    callback(e.target);
+                    this.editor.isDirty = true;
+                }
+            });
+        };
+
+        addDirtyListener('light-color-input', 'input', el => this.objectManager.selected.color.set(el.value));
+        addDirtyListener('light-intensity-slider', 'input', el => {
+            const val = parseFloat(el.value);
+            this.objectManager.selected.intensity = val;
+            document.getElementById('light-intensity-number').value = val;
+        });
+        addDirtyListener('light-intensity-number', 'input', el => {
+            const val = parseFloat(el.value);
+            this.objectManager.selected.intensity = val;
+            document.getElementById('light-intensity-slider').value = val;
+        });
+        addDirtyListener('light-shadow-check', 'change', el => this.objectManager.selected.castShadow = el.checked);
     }
 }

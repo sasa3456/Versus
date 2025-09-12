@@ -11,6 +11,94 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* ADD THESE STYLES TO YOUR app.css FILE */
+
+/* === STARTUP MODAL STYLES === */
+.vs-startup-modal {
+  background: linear-gradient(180deg, var(--panel), #0f1113);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: #d7d9db;
+  overflow: hidden; /* Important for view transitions */
+}
+
+.vs-startup-modal .modal-body {
+    padding: 2rem;
+}
+
+.vs-input {
+  background-color: #2a2f36;      /* базовый фон */
+  color: #e0e0e0;                 /* цвет текста */
+  border-radius: 6px;
+  padding: 6px 10px;
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+
+.vs-input:hover {
+  background-color: #323841;      /* немного светлее при наведении */
+  color: #ffffff;
+}
+
+.vs-input:focus {
+  background-color: #353c47;      /* ещё светлее при фокусе */
+  outline: none;
+  color:#ffffff;
+}
+
+
+
+.vs-btn-modal {
+    padding: 12px 18px;
+    font-size: 14px;
+    font-weight: 500;
+    justify-content: center;
+    background: var(--soft);
+}
+
+.vs-btn-modal:hover {
+    background: #33363a;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+    border-color: rgba(255,255,255,0.06);
+    color: #fff;
+}
+
+/* Styles for modal view transitions */
+.vs-modal-view {
+  display: none;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+
+
+.vs-modal-view.active {
+  display: block;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.vs-modal-view.exit-left {
+  transform: translateX(-20px);
+}
+
+#project-modal .input-group .vs-input {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+#project-modal .input-group .vs-btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    border-left: 0;
+}
+
+
+/* Keep existing styles below... */
+/* ... */
+
 /* Canvas renderer'а — растянуть на весь контейнер и принимать указатели */
 #viewport-container canvas,
 #viewport-container > canvas {
@@ -244,6 +332,10 @@ input {
       position: relative;
       overflow: hidden;
       border: 1px solid rgba(255,255,255,0.02);
+      transition: border-color 0.2s ease;
+    }
+    .vs-viewport-canvas.drag-over {
+        border-color: #74c0fc;
     }
 
     .vs-gizmo {
@@ -279,60 +371,9 @@ input {
     }
 
     .vs-bottom-panel {
-      height: 120px;
+      height: 200px; /* Increased height for asset explorer */
       display: flex;
       gap: 12px;
-    }
-
-    .vs-assets {
-      flex: 1;
-      background: linear-gradient(180deg,var(--soft), rgba(255,255,255,0.01));
-      border-radius: var(--radius-sm);
-      padding: 10px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
-
-    .vs-asset-item {
-      width: 84px;
-      height: 84px;
-      border-radius: 10px;
-      background: linear-gradient(180deg,#161718,#121314);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: var(--muted);
-      cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.02);
-      transition: all .15s;
-    }
-
-    .vs-asset-item:hover {
-      border-color: rgba(255,255,255,0.06);
-      color: #fff;
-    }
-
-    .vs-asset-item:active {
-      background: rgba(255,255,255,0.04);
-    }
-
-    .vs-timeline {
-      width: 520px;
-      background: linear-gradient(180deg,#111213,#0d0e10);
-      padding: 10px;
-      border-radius: var(--radius-sm);
-      display: flex;
-      flex-direction: column;
-    }
-
-    .vs-timeline-bar {
-      height: 42px;
-      background: linear-gradient(90deg,rgba(255,255,255,0.02),transparent);
-      border-radius: 8px;
-      margin-top: 8px;
     }
 
     .vs-input {
@@ -428,10 +469,6 @@ input {
         flex-direction: column;
         height: auto;
       }
-      
-      .vs-timeline {
-        width: 100%;
-      }
     }
 
     /* BOOTSTRAP OVERRIDE STYLES */
@@ -525,8 +562,6 @@ input {
       --bs-tooltip-border-radius: var(--radius-sm);
     }
 	
-	/* ДОБАВЬТЕ ЭТОТ КОД В ВАШ CSS ФАЙЛ */
-
 .vs-viewport-tools {
   position: absolute;
   top: 40%;
@@ -549,7 +584,6 @@ input {
 .accordion-button:not(.collapsed) {
   background-color: var(--soft);
   box-shadow: none;
-  /* Вот добавленное правило */
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
@@ -557,23 +591,19 @@ input {
   box-shadow: none;
 }
 
-/* Добавьте это правило, чтобы сохранить стили для активной кнопки аккордеона */
 .accordion-button:not(.collapsed) {
   background-color: var(--soft);
   color: #d7d9db;
   box-shadow: none;
-  /* Убираем скругление у нижней части кнопки, когда аккордеон открыт */
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
 
-/* Убираем скругление у нижней части кнопки, когда аккордеон открыт */
 .accordion-button:not(.collapsed) {
   border-bottom-left-radius: 0;
   border-bottom-right-radius: 0;
 }
 
-/* Чтобы кнопки не содержали текст, а только иконки */
 .vs-viewport-tools .vs-btn {
     padding: 8px;
 }
@@ -582,37 +612,110 @@ input {
   color: #fff;
 }
 
-    .vs-assets {
-      flex: 1;
-      background: linear-gradient(180deg,var(--soft), rgba(255,255,255,0.01));
-      border-radius: var(--radius-sm);
-      padding: 10px;
-      display: flex;
-      gap: 10px;
-      align-items: center;
-    }
+/* === NEW ASSET EXPLORER STYLES === */
+.vs-asset-explorer {
+    flex-grow: 1;
+    background: linear-gradient(180deg, var(--soft), rgba(43, 45, 48, 0.1));
+    border-radius: var(--radius-sm);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+}
 
-    .vs-asset-item {
-      width: 84px;
-      height: 84px;
-      border-radius: 10px;
-      background: linear-gradient(180deg,#161718,#121314);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      color: var(--muted);
-      cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.02);
-      transition: all .15s;
-    }
+.vs-asset-explorer-header {
+    background: rgba(0,0,0,0.1);
+    padding: 6px 10px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
 
-    .vs-asset-item:hover {
-      border-color: rgba(255,255,255,0.06);
-      color: #fff;
-    }
+.vs-asset-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+}
 
-    .vs-asset-item:active {
-      background: rgba(255,255,255,0.04);
-    }
+.vs-asset-breadcrumbs a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: all .15s;
+}
+
+.vs-asset-breadcrumbs a:hover {
+    background-color: rgba(255,255,255,0.05);
+    color: #fff;
+}
+
+.vs-asset-breadcrumbs .separator {
+    color: var(--accent);
+    margin: 0 4px;
+}
+
+.vs-asset-breadcrumbs .current {
+    color: #fff;
+    font-weight: 500;
+}
+
+.vs-asset-explorer-body {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 5px; /* for scrollbar */
+}
+
+.vs-asset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 12px;
+}
+
+.vs-asset-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 10px;
+    background: linear-gradient(180deg, #161718, #121314);
+    border: 1px solid rgba(255, 255, 255, 0.02);
+    transition: all .15s;
+    cursor: pointer;
+}
+
+.vs-asset-item:hover {
+    border-color: rgba(255, 255, 255, 0.08);
+    background: linear-gradient(180deg, #1f2022, #1a1b1d);
+    color: #fff;
+}
+.vs-asset-item.dragging {
+    opacity: 0.5;
+    border-style: dashed;
+}
+
+
+.vs-asset-item .icon {
+    width: 48px;
+    height: 48px;
+    color: var(--muted);
+    transition: color .15s;
+}
+
+.vs-asset-item:hover .icon {
+    color: #fff;
+}
+
+.vs-asset-item .name {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    word-break: break-all;
+    line-height: 1.2;
+    transition: color .15s;
+}
+.vs-asset-item:hover .name {
+    color: #fff;
+}
