@@ -555,6 +555,11 @@ input {
       --bs-dropdown-link-hover-bg: rgba(255,255,255,0.05);
       --bs-dropdown-divider-bg: var(--glass-border);
     }
+	
+	.dropdown-item:active {
+  background-color: #5d5d5d !important; /* Серый цвет */
+  color: #fff !important;
+}
 
     .tooltip {
       --bs-tooltip-bg: #1f2123;
@@ -612,60 +617,102 @@ input {
   color: #fff;
 }
 
-/* === NEW ASSET EXPLORER STYLES === */
+/* app.css */
+/* ... (keep all existing styles) ... */
+
+/* === MODIFIED ASSET EXPLORER STYLES === */
 .vs-asset-explorer {
     flex-grow: 1;
-    background: linear-gradient(180deg, var(--soft), rgba(43, 45, 48, 0.1));
-    border-radius: var(--radius-sm);
-    padding: 10px;
+    background: linear-gradient(180deg, var(--panel), rgba(21, 22, 24, 0.5));
+    border-radius: var(--radius);
+    padding: 0; /* Remove padding to allow full-height panels */
+    display: flex; /* Changed to flex for two-panel layout */
+    flex-direction: row; /* Side-by-side panels */
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow);
+}
+
+/* === NEW: ASSET EXPLORER SIDEBAR (TREE VIEW) === */
+.vs-asset-explorer-sidebar {
+    width: 240px;
+    flex-shrink: 0;
+    background: rgba(0,0,0,0.1);
+    padding: 14px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    overflow: hidden;
+    border-right: 1px solid var(--glass-border);
+    overflow-y: auto;
 }
 
-.vs-asset-explorer-header {
-    background: rgba(0,0,0,0.1);
-    padding: 6px 10px;
-    border-radius: 8px;
-    flex-shrink: 0;
+.vs-sidebar-header {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    padding: 0 4px 10px 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.vs-asset-breadcrumbs {
+.vs-asset-tree {
+    flex-grow: 1;
+}
+
+.vs-asset-tree-item {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 13px;
-}
-
-.vs-asset-breadcrumbs a {
-    color: var(--muted);
-    text-decoration: none;
-    padding: 4px 6px;
+    gap: 8px;
+    padding: 6px 8px;
     border-radius: 6px;
-    transition: all .15s;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.vs-asset-breadcrumbs a:hover {
+.vs-asset-tree-item:hover {
     background-color: rgba(255,255,255,0.05);
     color: #fff;
 }
 
-.vs-asset-breadcrumbs .separator {
-    color: var(--accent);
-    margin: 0 4px;
-}
-
-.vs-asset-breadcrumbs .current {
+.vs-asset-tree-item.active {
+    background-color: #3b71ca; /* Bootstrap primary color */
     color: #fff;
     font-weight: 500;
 }
 
-.vs-asset-explorer-body {
-    flex-grow: 1;
-    overflow-y: auto;
-    padding-right: 5px; /* for scrollbar */
+.vs-asset-tree-item .icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
+
+.vs-asset-tree-children {
+    padding-left: 18px; /* Indentation for nested items */
+}
+
+/* === NEW: ASSET EXPLORER MAIN CONTENT === */
+.vs-asset-explorer-main {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.vs-asset-explorer-header {
+    background: rgba(0,0,0,0.15);
+    padding: 6px 14px; /* Adjusted padding */
+    border-radius: 0;
+    flex-shrink: 0;
+    border: none;
+    border-bottom: 1px solid var(--glass-border); /* Separator line */
+}
+
+/* === MODIFIED ASSET GRID/ITEM === */
 
 .vs-asset-grid {
     display: grid;
@@ -680,15 +727,20 @@ input {
     gap: 8px;
     padding: 8px;
     border-radius: 10px;
-    background: linear-gradient(180deg, #161718, #121314);
-    border: 1px solid rgba(255, 255, 255, 0.02);
+    background: transparent;
+    border: 1px solid transparent;
     transition: all .15s;
     cursor: pointer;
 }
 
+/* Add a specific style for folders in the grid */
+.vs-asset-item[data-is-directory="true"] .icon {
+    color: #f0ad4e; /* A folder-like color */
+}
+
 .vs-asset-item:hover {
     border-color: rgba(255, 255, 255, 0.08);
-    background: linear-gradient(180deg, #1f2022, #1a1b1d);
+    background: var(--soft);
     color: #fff;
 }
 .vs-asset-item.dragging {
@@ -718,4 +770,15 @@ input {
 }
 .vs-asset-item:hover .name {
     color: #fff;
+}
+
+.vs-asset-explorer-body {
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    border: 2px dashed transparent;
+    padding: 5px; /* Важно, чтобы граница была видна */
+}
+
+.vs-asset-explorer-body.drag-over {
+    border-color: #74c0fc;
+    background-color: rgba(116, 192, 252, 0.1);
 }

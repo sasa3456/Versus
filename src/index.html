@@ -11,7 +11,8 @@
     {
       "imports": {
         "three": "https://unpkg.com/three@0.164.1/build/three.module.js",
-        "three/examples/jsm/": "https://unpkg.com/three@0.164.1/examples/jsm/"
+        "three/examples/jsm/": "https://unpkg.com/three@0.164.1/examples/jsm/",
+        "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
       }
     }
   </script>
@@ -81,6 +82,20 @@
     .left   { transform: rotateY(-90deg) translateZ(32px); }
     .top    { transform: rotateX(90deg) translateZ(32px); }
     .bottom { transform: rotateX(-90deg) translateZ(32px); }
+    
+     .vs-inspector {
+      display: flex;
+      flex-direction: column;
+      height: 100%; /* Ensure it fills the column height */
+    }
+
+    .vs-inspector .tab-content {
+      flex-grow: 1; /* Allow content to fill available space */
+      overflow-y: auto; /* Add vertical scrollbar when needed */
+      min-height: 0; /* Important for flexbox overflow */
+      padding-right: 5px; /* Add some space for the scrollbar */
+    }
+
   </style>
 </head>
 <body>
@@ -108,37 +123,89 @@
           </div>
 
           <div class="vs-modal-view" id="modal-view-create">
-  <form id="create-project-form">
-    <div class="vs-prop mb-3">
-      <label for="project-name" class="form-label">Название проекта</label>
-      <input type="text" class="vs-input" id="project-name" required>
-    </div>
- <div class="vs-prop mb-4">
-  <label for="project-location" class="form-label">Расположение</label>
-  <div class="input-group">
-    <input type="text" class="vs-input form-control" id="project-location" placeholder="..." readonly required>
-    <button class="vs-btn" type="button" id="select-location-btn" title="Выбрать папку">
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
-        <path d="M9.828 4H2a2 2 0 0 0-2 2v6.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5V6a2 2 0 0 0-2-2H9.828zM2 5h6.828L10.5 6.672H14a1 1 0 0 1 1 1v5.828A.5.5 0 0 1 14.5 14H1.5a.5.5 0 0 1-.5-.5V6a1 1 0 0 1 1-1z"/>
-      </svg>
-    </button>
-  </div>
-</div>
-
-    <div class="d-grid gap-3">
-       <button type="submit" class="vs-btn primary">Создать</button>
-       <button type="button" class="vs-btn" id="back-to-initial-view">Назад</button>
-    </div>
-  </form>
-</div>
-
+            <form id="create-project-form">
+              <div class="vs-prop mb-3">
+                <label for="project-name" class="form-label">Название проекта</label>
+                <input type="text" class="vs-input" id="project-name" required>
+              </div>
+              <div class="vs-prop mb-4">
+                <label for="project-location" class="form-label">Расположение</label>
+                <div class="input-group">
+                  <input type="text" class="vs-input form-control" id="project-location" placeholder="..." readonly required>
+                  <button class="vs-btn" type="button" id="select-location-btn" title="Выбрать папку">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16">
+                      <path d="M9.828 4H2a2 2 0 0 0-2 2v6.5A1.5 1.5 0 0 0 1.5 14h13a1.5 1.5 0 0 0 1.5-1.5V6a2 2 0 0 0-2-2H9.828zM2 5h6.828L10.5 6.672H14a1 1 0 0 1 1 1v5.828A.5.5 0 0 1 14.5 14H1.5a.5.5 0 0 1-.5-.5V6a1 1 0 0 1 1-1z"/>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="d-grid gap-3">
+                <button type="submit" class="vs-btn primary">Создать</button>
+                <button type="button" class="vs-btn" id="back-to-initial-view">Назад</button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
   </div>
+  
+  <div class="modal fade" id="settings-modal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content vs-startup-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="settingsModalLabel">Настройки</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <p class="vs-muted"><strong>Настройки будут доступны чуть позже!</strong> 
+									<strong>Мы обязательно вам сообщим :)</strong></p>
+            </div>
+        </div>
+    </div>
+</div>
 
+<div class="modal fade" id="build-modal" tabindex="-1" aria-labelledby="buildModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content vs-startup-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="buildModalLabel">Сборка</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="platform-select" class="form-label">Платформа</label>
+                    <select class="form-select vs-input" id="platform-select">
+                        <option value="windows">Windows</option>
+                        <option value="linux">Linux</option>
+                        <option value="macos">Mac OS</option>
+                        <option value="webgl">WEB GL</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="vs-btn" data-bs-dismiss="modal">Отмена</button>
+                <button type="button" class="vs-btn primary" id="build-confirm-btn">Собрать</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="betaModal" tabindex="-1" aria-labelledby="betaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="betaModalLabel">Открыть доступ</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Эта функция будет доступна в бета-версии, чтобы вы смогли работать над одним проектом с командой в режиме реального времени! Мы обязательно сообщим вам, когда это можно будет попробовать :)
+      </div>
+    </div>
+  </div>
+</div>
 
-  <div class="vs-container d-flex flex-column" style="visibility: hidden;"> <div class="vs-topbar vs-fade-up">
+  <div class="vs-container d-flex flex-column" style="visibility: hidden;">
+    <div class="vs-topbar vs-fade-up">
       <div class="d-flex align-items-center gap-4 w-100">
         <div class="d-flex align-items-center">
           <div class="vs-logo me-2">V</div>
@@ -147,7 +214,6 @@
             <div class="vs-app-sub" style="margin-right: 10px;">Versus - 0.0.1</div>
           </div>
         </div>
-
         <div class="d-flex gap-2">
           <div class="dropdown">
             <button style="margin-right: 10px;" class="vs-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -155,454 +221,511 @@
               Проект
             </button>
             <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#" id="new-project-menu-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg>
-                  Новый
-                </a></li>
-                <li><a class="dropdown-item" href="#" id="open-project-menu-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4H2.19zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707z"/></svg>
-                  Открыть
-                </a></li>
-                <li><a class="dropdown-item" href="#" id="save-project-btn">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/></svg>
-                  Сохранить
-                </a></li>
+                <li><a class="dropdown-item" href="#" id="new-project-menu-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/></svg> Новый</a></li>
+                <li><a class="dropdown-item" href="#" id="open-project-menu-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.54 3.87.5 3a2 2 0 0 1 2-2h3.672a2 2 0 0 1 1.414.586l.828.828A2 2 0 0 0 9.828 3h3.982a2 2 0 0 1 1.992 2.181l-.637 7A2 2 0 0 1 13.174 14H2.826a2 2 0 0 1-1.991-1.819l-.637-7a1.99 1.99 0 0 1 .342-1.31zM2.19 4a1 1 0 0 0-.996 1.09l.637 7a1 1 0 0 0 .995.91h10.348a1 1 0 0 0 .995-.91l.637-7A1 1 0 0 0 13.81 4H2.19zm4.69-1.707A1 1 0 0 0 6.172 2H2.5a1 1 0 0 0-1 .981l.006.139C1.72 3.042 1.95 3 2.19 3h5.396l-.707-.707z"/></svg> Открыть</a></li>
+                <li><a class="dropdown-item" href="#" id="save-project-btn"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M2 1a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1v7.293l2.646-2.647a.5.5 0 0 1 .708.708l-3.5 3.5a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L7.5 9.293V2a2 2 0 0 1 2-2H14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h2.5a.5.5 0 0 1 0 1H2z"/></svg> Сохранить</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/><path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/></svg>
-                  Настройки
-                </a></li>
-                <li><a class="dropdown-item" href="#">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M12.5 3a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h5zm0 3a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h5zm.5 3.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 .5-.5zm-.5 2.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h5z"/><path d="M16 2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2zM4 1v14H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h2zm1 0h9a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5V1z"/></svg>
-                  Собрать
-                </a></li>
+               <li><a class="dropdown-item" href="#" id="settings-menu-btn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 4.754a3.246 3.246 0 1 0 0 6.492 3.246 3.246 0 0 0 0-6.492zM5.754 8a2.246 2.246 0 1 1 4.492 0 2.246 2.246 0 0 1-4.492 0z"/>
+        <path d="M9.796 1.343c-.527-1.79-3.065-1.79-3.592 0l-.094.319a.873.873 0 0 1-1.255.52l-.292-.16c-1.64-.892-3.433.902-2.54 2.541l.159.292a.873.873 0 0 1-.52 1.255l-.319.094c-1.79.527-1.79 3.065 0 3.592l.319.094a.873.873 0 0 1 .52 1.255l-.16.292c-.892 1.64.901 3.434 2.541 2.54l.292-.159a.873.873 0 0 1 1.255.52l.094.319c.527 1.79 3.065 1.79 3.592 0l.094-.319a.873.873 0 0 1 1.255-.52l.292.16c1.64.893 3.434-.902 2.54-2.541l-.159-.292a.873.873 0 0 1 .52-1.255l.319-.094c1.79-.527 1.79-3.065 0-3.592l-.319-.094a.873.873 0 0 1-.52-1.255l.16-.292c.893-1.64-.902-3.433-2.541-2.54l-.292.159a.873.873 0 0 1-1.255-.52l-.094-.319zm-2.633.283c.246-.835 1.428-.835 1.674 0l.094.319a1.873 1.873 0 0 0 2.693 1.115l.291-.16c.764-.415 1.6.42 1.184 1.185l-.159.292a1.873 1.873 0 0 0 1.116 2.692l.318.094c.835.246.835 1.428 0 1.674l-.319.094a1.873 1.873 0 0 0-1.115 2.693l.16.291c.415.764-.42 1.6-1.185 1.184l-.291-.159a1.873 1.873 0 0 0-2.693 1.116l-.094.318c-.246.835-1.428.835-1.674 0l-.094-.319a1.873 1.873 0 0 0-2.692-1.115l-.292.16c-.764.415-1.6-.42-1.184-1.185l.159-.291A1.873 1.873 0 0 0 1.945 8.93l-.319-.094c-.835-.246-.835-1.428 0-1.674l.319-.094A1.873 1.873 0 0 0 3.06 4.377l-.16-.292c-.415-.764.42-1.6 1.185-1.184l.292.159a1.873 1.873 0 0 0 2.692-1.115l.094-.319z"/>
+    </svg> Настройки
+</a></li>
+                <li><a class="dropdown-item" href="#" id="build-menu-btn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M12.5 3a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h5zm0 3a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h5zm.5 3.5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 .5-.5zm-.5 2.5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1 0-1h5z"/>
+        <path d="M16 2a2 2 0 0 0-2-2H2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2zM4 1v14H2a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h2zm1 0h9a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H5V1z"/>
+    </svg> Собрать
+</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0v2z"/><path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3z"/></svg>
-                  Выйти
-                </a></li>
+               <li><a class="dropdown-item" href="#" id="exit-menu-btn">
+    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0v2z"/>
+        <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3z"/>
+    </svg> Выйти
+</a></li>
               </ul>
           </div>
-          <button id="undo-btn" style="margin-right: 10px;" class="vs-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Назад (Ctrl+Z)">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 7.5H10.5C12.1569 7.5 13.5 8.84315 13.5 10.5V10.5C13.5 12.1569 12.1569 13.5 10.5 13.5H9.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 5L3.5 7.5L6 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            Назад
-          </button>
-          <button id="redo-btn" style="margin-right: 10px;" class="vs-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Повторить (Ctrl+Y)">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 7.5H5.5C3.84315 7.5 2.5 8.84315 2.5 10.5V10.5C2.5 12.1569 3.84315 13.5 5.5 13.5H6.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 5L12.5 7.5L10 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            Повторить
-          </button>
-          <button style="margin-right: 10px;" class="vs-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Открыть доступ к проекту">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M11 6.5L13.5 4L11 1.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M4.5 12.5H10C11.3807 12.5 12.5 11.3807 12.5 10V4" stroke="currentColor" stroke-linecap="round"></path><path d="M12 14.5H3.5C2.94772 14.5 2.5 14.0523 2.5 13.5V3.5C2.5 2.94772 2.94772 2.5 3.5 2.5H7" stroke="currentColor" stroke-linecap="round"></path></svg>
-            Открыть доступ
-          </button>
+          <button id="undo-btn" style="margin-right: 10px;" class="vs-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Назад (Ctrl+Z)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 7.5H10.5C12.1569 7.5 13.5 8.84315 13.5 10.5V10.5C13.5 12.1569 12.1569 13.5 10.5 13.5H9.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M6 5L3.5 7.5L6 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg> Назад</button>
+          <button id="redo-btn" style="margin-right: 10px;" class="vs-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Повторить (Ctrl+Y)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 7.5H5.5C3.84315 7.5 2.5 8.84315 2.5 10.5V10.5C2.5 12.1569 3.84315 13.5 5.5 13.5H6.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 5L12.5 7.5L10 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg> Повторить</button>
+<button style="margin-right: 10px;" class="vs-btn" data-bs-toggle="modal" data-bs-target="#betaModal" title="Открыть доступ к проекту">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M11 6.5L13.5 4L11 1.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path>
+        <path d="M4.5 12.5H10C11.3807 12.5 12.5 11.3807 12.5 10V4" stroke="currentColor" stroke-linecap="round"></path>
+        <path d="M12 14.5H3.5C2.94772 14.5 2.5 14.0523 2.5 13.5V3.5C2.5 2.94772 2.94772 2.5 3.5 2.5H7" stroke="currentColor" stroke-linecap="round"></path>
+    </svg>
+    Открыть доступ
+</button>          
           <input type="file" id="model-loader-input" style="display: none;" accept=".glb,.gltf,.fbx,.obj">
           <input type="file" id="hdri-loader-input" style="display: none;" accept=".hdr">
         </div>
-        <div class="ms-auto d-flex align-items-center">
-            <span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Закрыть проект">
-    </span>
-        </div>
+        <div class="ms-auto d-flex align-items-center"><span data-bs-toggle="tooltip" data-bs-placement="bottom" title="Закрыть проект"></span></div>
       </div>
     </div>
 
-    <div class="row flex-grow-1 g-3">
-      <div class="col-md-3 col-lg-2 vs-sidebar-col">
-        <div class="vs-sidebar vs-fade-up">
-          <div class="d-flex gap-2">
-            <div class="dropdown">
-              <button class="vs-btn dropdown-toggle" type="button" id="add-object-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Добавить объект">
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3.5V12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3.5 8H12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              </button>
-              <ul class="dropdown-menu">
-                <li><h6 class="dropdown-header">Примитивы</h6></li>
-                <li><a class="dropdown-item add-primitive-btn" href="#" data-primitive-type="cube">Куб</a></li>
-                <li><a class="dropdown-item add-primitive-btn" href="#" data-primitive-type="sphere">Сфера</a></li>
-                <li><a class="dropdown-item add-primitive-btn" href="#" data-primitive-type="plane">Плоскость</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><h6 class="dropdown-header">Освещение</h6></li>
-                <li><a class="dropdown-item add-light-btn" href="#" data-light-type="directional">Направленный свет</a></li>
-                <li><a class="dropdown-item add-light-btn" href="#" data-light-type="point">Точечный свет</a></li>
-              </ul>
-            </div>
-			   <input class="vs-input" style="margin-right: 20px;" placeholder="Поиск...">
-            </div>
+    <div class="d-flex flex-column flex-grow-1" style="gap: 18px; min-height: 0;">
 
-          <div class="vs-section-title" style="margin-top: 20px;" >Объекты сцены</div>
-          <div class="vs-tree">
+      <div class="row flex-grow-1 g-3" style="min-height: 0;">
+        <div class="col-md-3 col-lg-2 vs-sidebar-col">
+          <div class="vs-sidebar vs-fade-up">
+            <div class="d-flex gap-2">
+              <div class="dropdown">
+                <button class="vs-btn dropdown-toggle" type="button" id="add-object-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Добавить объект"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 3.5V12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3.5 8H12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                <ul class="dropdown-menu">
+                  <li><h6 class="dropdown-header">Примитивы</h6></li>
+                  <li><a class="dropdown-item add-primitive-btn" href="#" data-primitive-type="cube">Куб</a></li>
+                  <li><a class="dropdown-item add-primitive-btn" href="#" data-primitive-type="sphere">Сфера</a></li>
+                  <li><a class="dropdown-item add-primitive-btn" href="#" data-primitive-type="plane">Плоскость</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Освещение</h6></li>
+                  <li><a class="dropdown-item add-light-btn" href="#" data-light-type="directional">Направленный свет</a></li>
+                  <li><a class="dropdown-item add-light-btn" href="#" data-light-type="point">Точечный свет</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><h6 class="dropdown-header">Игра</h6></li>
+                  <li><a class="dropdown-item" href="#" id="add-player-start-btn">Player Start</a></li>
+                </ul>
+              </div>
+              <input class="vs-input" style="margin-right: 20px;" placeholder="Поиск...">
             </div>
-
-          <div class="mt-auto">
-            <div class="vs-muted" style="font-size:12px">Autosave: 2m ago</div>
+            <div class="vs-section-title" style="margin-top: 20px;">Объекты сцены</div>
+            <div class="vs-tree"></div>
+            <div class="mt-auto">
+              <div class="vs-muted" style="font-size:12px">Autosave: 2m ago</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div class="col-md-6 col-lg-8">
-        <div class="vs-viewport-panel vs-fade-up h-100">
-          <div class="d-flex gap-3">
-             <div class="vs-play-toggle mx-auto">
-                <button class="vs-btn active" style="margin-right: 10px;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 2.5L12.5 8L4.5 13.5V2.5Z" stroke="currentColor" stroke-linejoin="round"></path></svg>
-                    Запуск
-                </button>
-                <button class="vs-btn" style="margin-right: 10px;">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.5 2.5L11.5 5.5L8.5 8.5L5.5 13.5L2.5 10.5L5.5 2.5Z" stroke="currentColor" stroke-linejoin="round"></path><path d="M10.5 13.5L13.5 10.5L8.5 8.5" stroke="currentColor" stroke-linejoin="round"></path></svg>
-                    Ноды
-                </button>
+        <div class="col-md-6 col-lg-8">
+          <div class="vs-viewport-panel vs-fade-up h-100">
+            <div class="d-flex gap-3">
+              <div class="vs-play-toggle mx-auto">
+                  <button id="play-btn" class="vs-btn"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.5 2.5L12.5 8L4.5 13.5V2.5Z" stroke="currentColor" stroke-linejoin="round"></path></svg> Play</button>
+                  <button id="stop-btn" class="vs-btn" style="display: none;"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="4" width="8" height="8" /></svg> Stop</button>
+              </div>
+            </div>
+            <div id="viewport-container" class="vs-viewport-canvas" tabindex="0">
+                <div class="viewport-top-left">
+                  <div class="dropdown">
+                      <button class="vs-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Настройки вьюпорта"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8H13.5" stroke="currentColor" stroke-linecap="round"></path><path d="M2.5 4H13.5" stroke="currentColor" stroke-linecap="round"></path><path d="M2.5 12H13.5" stroke="currentColor" stroke-linecap="round"></path></svg></button>
+                      <ul class="dropdown-menu">
+                        <li><h6 class="dropdown-header">Управление</h6></li>
+                        <li><a class="dropdown-item" href="#" id="controls-orbit-btn">Стандартное</a></li>
+                        <li><a class="dropdown-item" href="#" id="controls-game-btn">Игровое (WASD)</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header">Режим просмотра</h6></li>
+                        <li><a class="dropdown-item" href="#" id="view-mode-final-btn">Финальный</a></li>
+                        <li><a class="dropdown-item" href="#" id="view-mode-shaded-btn">Модель</a></li>
+                        <li><a class="dropdown-item" href="#" id="view-mode-wireframe-btn">Сетка</a></li>
+                        <li><a class="dropdown-item" href="#" id="view-mode-transparent-btn">Прозрачность</a></li>
+                      </ul>
+                    </div>
+                </div>
+                <div class="viewcube-container">
+                  <div id="viewcube">
+                    <div id="viewcube-scene">
+                      <div class="viewcube-face front" data-view="front">ПЕРЕД</div>
+                      <div class="viewcube-face back" data-view="back">СЗАДИ</div>
+                      <div class="viewcube-face right" data-view="right">ПРАВО</div>
+                      <div class="viewcube-face left" data-view="left">ЛЕВО</div>
+                      <div class="viewcube-face top" data-view="top">ВЕРХ</div>
+                      <div class="viewcube-face bottom" data-view="bottom">НИЗ</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="viewport-bottom-left" id="stats-container"></div>
+                <div class="vs-viewport-tools">
+                    <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Move Tool (W)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5V14.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M1.5 8H14.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 3.5L8 1.5L6 3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 12.5L8 14.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12.5 6L14.5 8L12.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3.5 6L1.5 8L3.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                    <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Rotate Tool (E)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 6.00004C13.1905 7.15243 13.5 8.5434 13.5 10C13.5 12.9261 11.2394 15 8.5 15C5.99201 15 3.86433 13.2124 3.5638 10.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.5 6H12.5V8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                    <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Scale Tool (R)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 12.5V3.5H12.5V12.5H3.5Z" stroke="currentColor" stroke-linejoin="round"></path><path d="M1.5 1.5H5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 1.5V5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 1.5H10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 1.5V5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 14.5H5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 14.5V10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 14.5H10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 14.5V10.5" stroke="currentColor" stroke-linecap="round"></path></svg></button>
+                </div>
             </div>
           </div>
-
-          <div id="viewport-container" class="vs-viewport-canvas" tabindex="0">
-              <div class="viewport-top-left">
-                <div class="dropdown">
-                    <button class="vs-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="Настройки вьюпорта">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8H13.5" stroke="currentColor" stroke-linecap="round"></path><path d="M2.5 4H13.5" stroke="currentColor" stroke-linecap="round"></path><path d="M2.5 12H13.5" stroke="currentColor" stroke-linecap="round"></path></svg>
-                    </button>
-                    <ul class="dropdown-menu">
-                      <li><h6 class="dropdown-header">Управление</h6></li>
-                      <li><a class="dropdown-item" href="#" id="controls-orbit-btn">Стандартное</a></li>
-                      <li><a class="dropdown-item" href="#" id="controls-game-btn">Игровое (WASD)</a></li>
-                      <li><hr class="dropdown-divider"></li>
-                      <li><h6 class="dropdown-header">Режим просмотра</h6></li>
-                      <li><a class="dropdown-item" href="#" id="view-mode-final-btn">Финальный</a></li>
-                      <li><a class="dropdown-item" href="#" id="view-mode-shaded-btn">Модель</a></li>
-                      <li><a class="dropdown-item" href="#" id="view-mode-wireframe-btn">Сетка</a></li>
-                      <li><a class="dropdown-item" href="#" id="view-mode-transparent-btn">Прозрачность</a></li>
-                    </ul>
-                  </div>
-              </div>
-
-              <div class="viewcube-container">
-                <div id="viewcube">
-                  <div id="viewcube-scene">
-                    <div class="viewcube-face front" data-view="front">ПЕРЕД</div>
-                    <div class="viewcube-face back" data-view="back">СЗАДИ</div>
-                    <div class="viewcube-face right" data-view="right">ПРАВО</div>
-                    <div class="viewcube-face left" data-view="left">ЛЕВО</div>
-                    <div class="viewcube-face top" data-view="top">ВЕРХ</div>
-                    <div class="viewcube-face bottom" data-view="bottom">НИЗ</div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="viewport-bottom-left" id="stats-container"></div>
-
-              <div class="vs-viewport-tools">
-                  <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Move Tool (W)">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 1.5V14.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M1.5 8H14.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 3.5L8 1.5L6 3.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10 12.5L8 14.5L6 12.5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M12.5 6L14.5 8L12.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M3.5 6L1.5 8L3.5 10" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                  </button>
-                  <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Rotate Tool (E)">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12.5 6.00004C13.1905 7.15243 13.5 8.5434 13.5 10C13.5 12.9261 11.2394 15 8.5 15C5.99201 15 3.86433 13.2124 3.5638 10.8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path><path d="M10.5 6H12.5V8" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                  </button>
-                  <button class="vs-btn" style="margin-top: 10px;" data-bs-toggle="tooltip" data-bs-placement="right" title="Scale Tool (R)">
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3.5 12.5V3.5H12.5V12.5H3.5Z" stroke="currentColor" stroke-linejoin="round"></path><path d="M1.5 1.5H5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 1.5V5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 1.5H10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 1.5V5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 14.5H5.5" stroke="currentColor" stroke-linecap="round"></path><path d="M1.5 14.5V10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 14.5H10.5" stroke="currentColor" stroke-linecap="round"></path><path d="M14.5 14.5V10.5" stroke="currentColor" stroke-linecap="round"></path></svg>
-                  </button>
-              </div>
-          </div>
         </div>
-      </div>
 
-      <div class="col-md-3 col-lg-2 vs-inspector-col">
-        <div class="vs-inspector vs-fade-up">
-          <ul class="nav nav-tabs">
-            <li class="nav-item">
-              <a class="nav-link active" data-bs-toggle="tab" href="#inspector-tab">Инспектор</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" data-bs-toggle="tab" href="#world-tab">Мир</a>
-            </li>
-          </ul>
-          <div class="tab-content flex-grow-1 pt-3">
-            <div class="tab-pane fade show active" id="inspector-tab">
-              <div class="accordion" id="inspectorAccordion">
-                <div class="accordion-item" id="transform-accordion-item">
-                  <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTransform">
-                      Трансформация
-                    </button>
-                  </h2>
-                  <div id="collapseTransform" class="accordion-collapse collapse show" data-bs-parent="#inspectorAccordion">
-                    <div class="accordion-body">
-                      </div>
-                  </div>
-                </div>
-                <div class="accordion-item" id="material-accordion-item">
-                  <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMaterial">
-                      Материал
-                    </button>
-                  </h2>
-                  <div id="collapseMaterial" class="accordion-collapse collapse" data-bs-parent="#inspectorAccordion">
-                    <div class="accordion-body">
-                      </div>
-                  </div>
-                </div>
-                <div class="accordion-item" id="light-accordion-item" style="display: none;">
+        <div class="col-md-3 col-lg-2 vs-inspector-col">
+          <div class="vs-inspector vs-fade-up">
+            <ul class="nav nav-tabs">
+              <li class="nav-item">
+                <a class="nav-link active" data-bs-toggle="tab" href="#inspector-tab">Инспектор</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" data-bs-toggle="tab" href="#world-tab">Мир</a>
+              </li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane fade show active" id="inspector-tab">
+                <div class="vs-scroll-pane">
+                  <div class="accordion" id="inspectorAccordion">
+                  <div class="accordion-item" id="transform-accordion-item">
                     <h2 class="accordion-header">
-                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLight">
-                            Источник света
-                        </button>
+                      <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTransform">
+                        Трансформация
+                      </button>
                     </h2>
-                    <div id="collapseLight" class="accordion-collapse collapse" data-bs-parent="#inspectorAccordion">
-                        <div class="accordion-body">
-                            <div class="vs-prop">
-                                <label for="light-color">Цвет</label>
-                                <input type="color" id="light-color-input" class="vs-input" value="#ffffff">
-                            </div>
-                            <div class="vs-prop">
-                                <label for="light-intensity">Интенсивность</label>
-                                <div class="d-flex align-items-center gap-2">
-                                    <input type="range" id="light-intensity-slider" class="vs-input flex-grow-1" min="0" max="10" step="0.05" value="1">
-                                    <input type="number" id="light-intensity-number" class="vs-input" style="max-width: 60px;" min="0" max="10" step="0.1" value="1">
-                                </div>
-                            </div>
-                             <div class="vs-prop">
-                                <div class="form-check">
-                                  <input class="form-check-input" type="checkbox" value="" id="light-shadow-check">
-                                  <label class="form-check-label" for="light-shadow-check">
-                                    Создавать тени
-                                  </label>
-                                </div>
-                            </div>
+                    <div id="collapseTransform" class="accordion-collapse collapse show" data-bs-parent="#inspectorAccordion">
+                      <div class="accordion-body">
                         </div>
                     </div>
+                  </div>
+                   <div class="accordion-item" id="physics-accordion-item" style="display: none;">
+                      <h2 class="accordion-header">
+                          <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePhysics">
+                              Физика
+                          </button>
+                      </h2>
+                      <div id="collapsePhysics" class="accordion-collapse collapse show" data-bs-parent="#inspectorAccordion">
+                          <div class="accordion-body">
+                              <div class="vs-prop">
+                                  <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="physics-dynamic-check">
+                                    <label class="form-check-label" for="physics-dynamic-check">
+                                      Динамический
+                                    </label>
+                                  </div>
+                              </div>
+                              <div class="vs-prop">
+                                  <label for="physics-mass-number">Масса</label>
+                                  <input type="number" id="physics-mass-number" class="vs-input" min="0" step="0.1" value="1">
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+				  <div class="accordion-item" id="player-settings-accordion-item" style="display: none;">
+    <h2 class="accordion-header">
+        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePlayerSettings">
+            Настройки Игрока
+        </button>
+    </h2>
+    <div id="collapsePlayerSettings" class="accordion-collapse collapse show" data-bs-parent="#inspectorAccordion">
+        <div class="accordion-body">
+            <div class="vs-prop">
+                <label for="player-movespeed">Скорость движения</label>
+                <input type="number" id="player-movespeed" class="vs-input" min="0" step="0.1" value="5">
+            </div>
+            <div class="vs-prop">
+                <label for="player-runspeed">Скорость бега</label>
+                <input type="number" id="player-runspeed" class="vs-input" min="0" step="0.1" value="8">
+            </div>
+            <div class="vs-prop">
+                <label for="player-jumpheight">Сила прыжка</label>
+                <input type="number" id="player-jumpheight" class="vs-input" min="0" step="0.1" value="6">
+            </div>
+            <div class="vs-prop">
+                <label for="player-mass">Масса (кг)</label>
+                <input type="number" id="player-mass" class="vs-input" min="0" step="1" value="70">
+            </div>
+            <div class="vs-prop">
+                <label for="player-height">Высота</label>
+                <input type="number" id="player-height" class="vs-input" min="0" step="0.1" value="1.8">
+            </div>
+            <div class="vs-prop">
+                <label for="player-radius">Радиус</label>
+                <input type="number" id="player-radius" class="vs-input" min="0" step="0.1" value="0.4">
+            </div>
+            <div class="vs-prop">
+                <label for="player-cam-height">Высота камеры</label>
+                <input type="number" id="player-cam-height" class="vs-input" min="0" step="0.1" value="1.7">
+            </div>
+             <div class="vs-prop">
+                <label for="player-cam-fov">Угол обзора (FOV)</label>
+                <input type="number" id="player-cam-fov" class="vs-input" min="40" max="120" step="1" value="75">
+            </div>
+        </div>
+    </div>
+</div>
+                  <div class="accordion-item" id="material-accordion-item">
+                    <h2 class="accordion-header">
+                      <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseMaterial">
+                        Материал
+                      </button>
+                    </h2>
+                    <div id="collapseMaterial" class="accordion-collapse collapse" data-bs-parent="#inspectorAccordion">
+                      <div class="accordion-body">
+                        </div>
+                    </div>
+                  </div>
+                  <div class="accordion-item" id="light-accordion-item" style="display: none;">
+                      <h2 class="accordion-header">
+                          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLight">
+                              Источник света
+                          </button>
+                      </h2>
+                      <div id="collapseLight" class="accordion-collapse collapse" data-bs-parent="#inspectorAccordion">
+                          <div class="accordion-body">
+                              <div class="vs-prop">
+                                  <label for="light-color">Цвет</label>
+                                  <input type="color" id="light-color-input" class="vs-input" value="#ffffff">
+                              </div>
+                              <div class="vs-prop">
+                                  <label for="light-intensity">Интенсивность</label>
+                                  <div class="d-flex align-items-center gap-2">
+                                      <input type="range" id="light-intensity-slider" class="vs-input flex-grow-1" min="0" max="10" step="0.05" value="1">
+                                      <input type="number" id="light-intensity-number" class="vs-input" style="max-width: 60px;" min="0" max="10" step="0.1" value="1">
+                                  </div>
+                              </div>
+                               <div class="vs-prop">
+                                  <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" value="" id="light-shadow-check">
+                                    <label class="form-check-label" for="light-shadow-check">
+                                      Создавать тени
+                                    </label>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
                 </div>
-
+                </div>
+                </div>
+                <div class="tab-pane fade" id="world-tab">
+                  <div class="vs-scroll-pane">
+                  <div class="accordion" id="worldAccordion">
+                      <div class="accordion-item">
+                          <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIbl">Окружение (IBL)</button></h2>
+                          <div id="collapseIbl" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                              <div class="accordion-body">
+                                  <div class="vs-prop">
+                                      <label>Интенсивность</label>
+                                      <input type="range" id="ibl-intensity-slider" class="vs-input" min="0" max="3" step="0.01" value="0.3">
+                                  </div>
+                                   <div class="vs-prop">
+                                      <label>Размытие фона</label>
+                                      <input type="range" id="bg-blur-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="accordion-item">
+                          <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSkybox">Небо</button></h2>
+                          <div id="collapseSkybox" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                              <div class="accordion-body">
+                                  <div class="vs-prop">
+                                      <label>Режим</label>
+                                      <select id="skybox-mode-select" class="vs-input">
+                                          <option value="hdri">HDRI</option>
+                                          <option value="color">Цвет</option>
+                                          <option value="gradient">Градиент</option>
+                                      </select>
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label for="skybox-color-input">Цвет неба</label>
+                                      <input type="color" id="skybox-color-input" class="vs-input" value="#1e2127">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label for="skybox-gradient-top-input">Цвет градиента (верх)</label>
+                                      <input type="color" id="skybox-gradient-top-input" class="vs-input" value="#1e2127">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label for="skybox-gradient-bottom-input">Цвет градиента (низ)</label>
+                                      <input type="color" id="skybox-gradient-bottom-input" class="vs-input" value="#2a2f36">
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="accordion-item">
+                          <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSun">Солнце</button></h2>
+                          <div id="collapseSun" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                              <div class="accordion-body">
+                                  <div class="vs-prop">
+                                      <label>X</label>
+                                      <input type="range" id="sun-x-slider" class="vs-input" min="-50" max="50" step="0.1" value="15">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Y</label>
+                                      <input type="range" id="sun-y-slider" class="vs-input" min="-50" max="50" step="0.1" value="20">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Z</label>
+                                      <input type="range" id="sun-z-slider" class="vs-input" min="-50" max="50" step="0.1" value="10">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Интенсивность</label>
+                                      <input type="range" id="sun-intensity-slider" class="vs-input" min="0" max="5" step="0.01" value="1.2">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <div class="form-check">
+                                          <input class="form-check-input" type="checkbox" id="sun-shadow-check" checked>
+                                          <label class="form-check-label" for="sun-shadow-check">
+                                              Создавать тени
+                                          </label>
+                                      </div>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="accordion-item">
+                          <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseClouds">Облака</button></h2>
+                          <div id="collapseClouds" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                              <div class="accordion-body">
+                                  <div class="vs-prop">
+                                      <label>Включить</label>
+                                      <div class="form-check form-switch ms-auto">
+                                          <input class="form-check-input" type="checkbox" id="cloud-enabled-check">
+                                      </div>
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Скорость</label>
+                                      <input type="range" id="cloud-speed-slider" class="vs-input" min="0" max="0.1" step="0.001" value="0.01">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Плотность</label>
+                                      <input type="range" id="cloud-density-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Поглощение</label>
+                                      <input type="range" id="cloud-absorption-slider" class="vs-input" min="0" max="1" step="0.01" value="0.2">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Поглощение света</label>
+                                      <input type="range" id="cloud-light-absorption-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Мин. высота</label>
+                                      <input type="range" id="cloud-min-height-slider" class="vs-input" min="0" max="1000" step="10" value="200">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Макс. высота</label>
+                                      <input type="range" id="cloud-max-height-slider" class="vs-input" min="0" max="1000" step="10" value="400">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Масштаб шума</label>
+                                      <input type="range" id="cloud-noise-scale-slider" class="vs-input" min="0" max="0.1" step="0.001" value="0.02">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Влияние деталей</label>
+                                      <input type="range" id="cloud-detail-influence-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="accordion-item">
+                          <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePostProcessing">Постобработка</button></h2>
+                          <div id="collapsePostProcessing" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                              <div class="accordion-body">
+                                  <div class="vs-prop">
+                                      <label>Сила виньетки</label>
+                                      <input type="range" id="vignette-strength-slider" class="vs-input" min="0" max="2" step="0.01" value="0">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Хроматическая аберрация</label>
+                                      <input type="range" id="chromatic-aberation-amount-slider" class="vs-input" min="0" max="0.1" step="0.001" value="0.0">
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                      <div class="accordion-item">
+                          <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBloom">Glow (Bloom)</button></h2>
+                          <div id="collapseBloom" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                              <div class="accordion-body">
+                                  <div class="vs-prop">
+                                      <label>Порог</label>
+                                      <input type="range" id="bloom-threshold-slider" class="vs-input" min="0" max="2" step="0.01" value="0.85">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Сила</label>
+                                      <input type="range" id="bloom-strength-slider" class="vs-input" min="0" max="3" step="0.01" value="0">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label>Радиус</label>
+                                      <input type="range" id="bloom-radius-slider" class="vs-input" min="0" max="2" step="0.01" value="0">
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                       <div class="accordion-item">
+                          <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFog">Туман</button></h2>
+                          <div id="collapseFog" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                              <div class="accordion-body">
+                                  <div class="vs-prop">
+                                    <label for="fog-color">Цвет тумана</label>
+                                    <input type="color" id="fog-color-input" class="vs-input" value="#282c34">
+                                  </div>
+                                  <div class="vs-prop">
+                                      <label for="fog-density">Плотность тумана</label>
+                                      <input type="range" id="fog-density-slider" class="vs-input" min="0" max="0.1" step="0.001" value="0">
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                         <div class="accordion-item">
+                  <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOutline">Обводка</button></h2>
+                  <div id="collapseOutline" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                      <div class="accordion-body">
+                          <div class="vs-prop">
+                              <label>Включить</label>
+                              <div class="form-check form-switch ms-auto">
+                                  <input class="form-check-input" type="checkbox" id="outline-enabled-check" checked>
+                              </div>
+                          </div>
+                          <div class="vs-prop">
+                              <label>Толщина</label>
+                              <input type="range" id="outline-thickness-slider" class="vs-input" min="0" max="10" step="0.1" value="3">
+                          </div>
+                          <div class="vs-prop">
+                              <label for="outline-color-input">Цвет</label>
+                              <input type="color" id="outline-color-input" class="vs-input" value="#74c0fc">
+                          </div>
+                      </div>
+                  </div>
+              </div>
+               <div class="accordion-item">
+                  <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLensflare">Блик от линзы</button></h2>
+                  <div id="collapseLensflare" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
+                      <div class="accordion-body">
+                          <div class="vs-prop">
+                              <label>Включить</label>
+                              <div class="form-check form-switch ms-auto">
+                                  <input class="form-check-input" type="checkbox" id="lensflare-enabled-check" checked>
+                              </div>
+                          </div>
+                          <div class="vs-prop">
+                              <label>Интенсивность</label>
+                              <input type="range" id="lensflare-intensity-slider" class="vs-input" min="0" max="1" step="0.01" value="0">
+                          </div>
+                      </div>
+                  </div>
+              </div>
+              <div class="vs-prop">
+                  <label class="vs-check-label">
+                      <input type="checkbox" id="bloom-enabled-check" class="vs-check">
+                      Свечение (Bloom)
+                  </label>
+              </div>
+                  </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="tab-pane fade" id="world-tab">
-                <div class="accordion" id="worldAccordion">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIbl">Окружение (IBL)</button></h2>
-                        <div id="collapseIbl" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                            <div class="accordion-body">
-                                <div class="vs-prop">
-                                    <label>Интенсивность</label>
-                                    <input type="range" id="ibl-intensity-slider" class="vs-input" min="0" max="3" step="0.01" value="0.3">
-                                </div>
-                                 <div class="vs-prop">
-                                    <label>Размытие фона</label>
-                                    <input type="range" id="bg-blur-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSkybox">Небо</button></h2>
-                        <div id="collapseSkybox" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                            <div class="accordion-body">
-                                <div class="vs-prop">
-                                    <label>Режим</label>
-                                    <select id="skybox-mode-select" class="vs-input">
-                                        <option value="hdri">HDRI</option>
-                                        <option value="color">Цвет</option>
-                                        <option value="gradient">Градиент</option>
-                                    </select>
-                                </div>
-                                <div class="vs-prop">
-                                    <label for="skybox-color-input">Цвет неба</label>
-                                    <input type="color" id="skybox-color-input" class="vs-input" value="#1e2127">
-                                </div>
-                                <div class="vs-prop">
-                                    <label for="skybox-gradient-top-input">Цвет градиента (верх)</label>
-                                    <input type="color" id="skybox-gradient-top-input" class="vs-input" value="#1e2127">
-                                </div>
-                                <div class="vs-prop">
-                                    <label for="skybox-gradient-bottom-input">Цвет градиента (низ)</label>
-                                    <input type="color" id="skybox-gradient-bottom-input" class="vs-input" value="#2a2f36">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSun">Солнце</button></h2>
-                        <div id="collapseSun" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                            <div class="accordion-body">
-                                <div class="vs-prop">
-                                    <label>X</label>
-                                    <input type="range" id="sun-x-slider" class="vs-input" min="-50" max="50" step="0.1" value="15">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Y</label>
-                                    <input type="range" id="sun-y-slider" class="vs-input" min="-50" max="50" step="0.1" value="20">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Z</label>
-                                    <input type="range" id="sun-z-slider" class="vs-input" min="-50" max="50" step="0.1" value="10">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Интенсивность</label>
-                                    <input type="range" id="sun-intensity-slider" class="vs-input" min="0" max="5" step="0.01" value="1.2">
-                                </div>
-                                <div class="vs-prop">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="sun-shadow-check" checked>
-                                        <label class="form-check-label" for="sun-shadow-check">
-                                            Создавать тени
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseClouds">Облака</button></h2>
-                        <div id="collapseClouds" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                            <div class="accordion-body">
-                                <div class="vs-prop">
-                                    <label>Включить</label>
-                                    <div class="form-check form-switch ms-auto">
-                                        <input class="form-check-input" type="checkbox" id="cloud-enabled-check">
-                                    </div>
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Скорость</label>
-                                    <input type="range" id="cloud-speed-slider" class="vs-input" min="0" max="0.1" step="0.001" value="0.01">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Плотность</label>
-                                    <input type="range" id="cloud-density-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Поглощение</label>
-                                    <input type="range" id="cloud-absorption-slider" class="vs-input" min="0" max="1" step="0.01" value="0.2">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Поглощение света</label>
-                                    <input type="range" id="cloud-light-absorption-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Мин. высота</label>
-                                    <input type="range" id="cloud-min-height-slider" class="vs-input" min="0" max="1000" step="10" value="200">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Макс. высота</label>
-                                    <input type="range" id="cloud-max-height-slider" class="vs-input" min="0" max="1000" step="10" value="400">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Масштаб шума</label>
-                                    <input type="range" id="cloud-noise-scale-slider" class="vs-input" min="0" max="0.1" step="0.001" value="0.02">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Влияние деталей</label>
-                                    <input type="range" id="cloud-detail-influence-slider" class="vs-input" min="0" max="1" step="0.01" value="0.5">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePostProcessing">Постобработка</button></h2>
-                        <div id="collapsePostProcessing" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                            <div class="accordion-body">
-                                <div class="vs-prop">
-                                    <label>Сила виньетки</label>
-                                    <input type="range" id="vignette-strength-slider" class="vs-input" min="0" max="2" step="0.01" value="0">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Хроматическая аберрация</label>
-                                    <input type="range" id="chromatic-aberation-amount-slider" class="vs-input" min="0" max="0.1" step="0.001" value="0.0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBloom">Glow (Bloom)</button></h2>
-                        <div id="collapseBloom" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                            <div class="accordion-body">
-                                <div class="vs-prop">
-                                    <label>Порог</label>
-                                    <input type="range" id="bloom-threshold-slider" class="vs-input" min="0" max="2" step="0.01" value="0.85">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Сила</label>
-                                    <input type="range" id="bloom-strength-slider" class="vs-input" min="0" max="3" step="0.01" value="0">
-                                </div>
-                                <div class="vs-prop">
-                                    <label>Радиус</label>
-                                    <input type="range" id="bloom-radius-slider" class="vs-input" min="0" max="2" step="0.01" value="0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                     <div class="accordion-item">
-                        <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFog">Туман</button></h2>
-                        <div id="collapseFog" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                            <div class="accordion-body">
-                                <div class="vs-prop">
-                                  <label for="fog-color">Цвет тумана</label>
-                                  <input type="color" id="fog-color-input" class="vs-input" value="#282c34">
-                                </div>
-                                <div class="vs-prop">
-                                    <label for="fog-density">Плотность тумана</label>
-                                    <input type="range" id="fog-density-slider" class="vs-input" min="0" max="0.1" step="0.001" value="0">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-					   <div class="accordion-item">
-                <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOutline">Обводка</button></h2>
-                <div id="collapseOutline" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                    <div class="accordion-body">
-                        <div class="vs-prop">
-                            <label>Включить</label>
-                            <div class="form-check form-switch ms-auto">
-                                <input class="form-check-input" type="checkbox" id="outline-enabled-check" checked>
-                            </div>
-                        </div>
-                        <div class="vs-prop">
-                            <label>Толщина</label>
-                            <input type="range" id="outline-thickness-slider" class="vs-input" min="0" max="10" step="0.1" value="3">
-                        </div>
-                        <div class="vs-prop">
-                            <label for="outline-color-input">Цвет</label>
-                            <input type="color" id="outline-color-input" class="vs-input" value="#74c0fc">
-                        </div>
-                    </div>
-                </div>
-            </div>
-             <div class="accordion-item">
-                <h2 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseLensflare">Блик от линзы</button></h2>
-                <div id="collapseLensflare" class="accordion-collapse collapse show" data-bs-parent="#worldAccordion">
-                    <div class="accordion-body">
-                        <div class="vs-prop">
-                            <label>Включить</label>
-                            <div class="form-check form-switch ms-auto">
-                                <input class="form-check-input" type="checkbox" id="lensflare-enabled-check" checked>
-                            </div>
-                        </div>
-                        <div class="vs-prop">
-                            <label>Интенсивность</label>
-                            <input type="range" id="lensflare-intensity-slider" class="vs-input" min="0" max="1" step="0.01" value="0">
-                        </div>
-                    </div>
-                </div>
-            </div>
-			<div class="vs-prop">
-  <label class="vs-check-label">
-    <input type="checkbox" id="bloom-enabled-check" class="vs-check">
-    Свечение (Bloom)
-  </label>
-</div>
-                </div>
-            </div>
+		  </div>
+        </div>
+      </div>
+
+     <div class="vs-bottom-panel vs-fade-up">
+        <div class="vs-asset-explorer">
+          <div class="vs-asset-explorer-sidebar">
+              <div class="vs-sidebar-header">Assets</div>
+              <div id="asset-tree-container" class="vs-asset-tree">
+                  </div>
+          </div>
+          
+          <div class="vs-asset-explorer-main">
+              <div class="vs-asset-explorer-header">
+                <nav id="asset-breadcrumbs" class="vs-asset-breadcrumbs" aria-label="breadcrumb">
+                  </nav>
+              </div>
+              <div class="vs-asset-explorer-body">
+                <div id="asset-grid" class="vs-asset-grid">
+                  </div>
+              </div>
           </div>
         </div>
       </div>
-    </div>
-    
-    <div class="vs-bottom-panel vs-fade-up">
-        <div class="vs-asset-explorer">
-            <div class="vs-asset-explorer-header">
-                <nav class="vs-asset-breadcrumbs" aria-label="breadcrumb">
-                    </nav>
-            </div>
-            <div class="vs-asset-explorer-body">
-                <div class="vs-asset-grid">
-                    </div>
-            </div>
-        </div>
-    </div>
 
+    </div>
+  </div>
+
+
+    </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

@@ -50,7 +50,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } catch (error) {
             console.error("Не удалось инициализировать редактор:", error);
-            document.body.innerHTML = `<div style="padding: 20px; text-align: center; color: red;"><h1>Критическая ошибка</h1><p>${error.message}</p></div>`;
+            alert(`Критическая ошибка: ${error.message}`);
+            return;
         }
     };
 	
@@ -144,13 +145,38 @@ function setupViewModeButtons(app) {
 
     // --- New Project From Menu ---
     document.getElementById('new-project-menu-btn').addEventListener('click', () => {
-       if(confirm("Вы уверены, что хотите создать новый проект? Все несохраненные изменения будут потеряны.")) {
+       if(confirm("Создать новый проект?")) {
            window.location.reload(); // Easiest way to restart the process
        }
     });
 
     // Show the modal on startup
     projectModal.show();
+});
+
+// Добавьте этот код в конец обработчика DOMContentLoaded в app.js
+document.getElementById('build-menu-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    const buildModal = new bootstrap.Modal(document.getElementById('build-modal'));
+    buildModal.show();
+});
+
+// Обработчик для кнопки "Собрать" в модальном окне
+document.getElementById('build-confirm-btn').addEventListener('click', () => {
+    const platform = document.getElementById('platform-select').value;
+    alert(`Начинаем сборку для платформы: ${platform}`);
+    // Здесь будет логика запуска сборки
+    bootstrap.Modal.getInstance(document.getElementById('build-modal')).hide();
+});
+
+// Добавьте этот код в конец обработчика DOMContentLoaded в app.js
+
+
+// Добавьте этот код в конец обработчика DOMContentLoaded в app.js
+document.getElementById('settings-menu-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    const settingsModal = new bootstrap.Modal(document.getElementById('settings-modal'));
+    settingsModal.show();
 });
 
 // Закрытие приложения по крестику в модальном окне
@@ -177,3 +203,11 @@ if (modalCloseBtn) {
     });
 }
 
+window.addEventListener('DOMContentLoaded', () => {
+  const exitMenuButton = document.getElementById('exit-menu-btn');
+  if (exitMenuButton) {
+    exitMenuButton.addEventListener('click', () => {
+      window.electronAPI.confirmClose();
+    });
+  }
+});

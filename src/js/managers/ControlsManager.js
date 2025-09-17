@@ -1,4 +1,3 @@
-// js/managers/ControlsManager.js
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
@@ -9,19 +8,21 @@ export default class ControlsManager {
         this.camera = camera;
         this.domElement = domElement;
         this.objectManager = objectManager;
-        this.editor = editor; // Reference to the main editor class for history
+        this.editor = editor;
         this.raycaster = new THREE.Raycaster();
         this.mouse = new THREE.Vector2();
 
-        this.objectBeforeTransform = null; // To store state before transform
+        this.objectBeforeTransform = null;
+        this.currentControlType = null;
+        
+        // --- UPDATED moveState ---
+        this.moveState = { forward: false, backward: false, left: false, right: false, jump: false, run: false };
 
         this.initOrbitControls();
         this.initPointerLockControls();
         this.initTransformControls();
 
-        // init gizmo buttons (UI) and keyboard handling
         this.initGizmoButtons();
-
         this.setupEventListeners();
 
         this.setControlType('orbit');
@@ -34,15 +35,12 @@ export default class ControlsManager {
     }
 
     initPointerLockControls() {
-        this.pointerLock = new PointerLockControls(this.camera, this.domElement);
-        this.moveState = { forward: 0, right: 0 };
-        this.moveSpeed = 5.0;
+        this.pointerLock = new PointerLockControls(this.camera, document.body); // Lock to body for better experience
     }
 
     initTransformControls() {
         this.transform = new TransformControls(this.camera, this.domElement);
         this.transform.isTransformControls = true;
-        // transform will be added to scene via objectManager.scene
         this.objectManager.scene.add(this.transform);
     }
 
@@ -81,11 +79,11 @@ export default class ControlsManager {
 
     setupEventListeners() {
         // Слушаем событие выбора объекта от ObjectManager
-        window.addEventListener('selectionChanged', (e) => {
+      window.addEventListener('selectionChanged', (e) => {
+            if (this.editor.isPlaying) return; // Don't attach gizmo in play mode
             const selected = e.detail.selected;
             if (selected) {
                 this.transform.attach(selected);
-                // ensure transform is enabled so gizmo is visible
                 this.transform.enabled = true;
             } else {
                 this.transform.detach();
@@ -138,16 +136,20 @@ export default class ControlsManager {
             }
         });
 
-        // Клик для выбора объекта
-        this.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
-
-        // Клавиши
+         this.domElement.addEventListener('pointerdown', (e) => this.onPointerDown(e));
         window.addEventListener('keydown', (e) => this.onKeyDown(e));
         window.addEventListener('keyup', (e) => this.onKeyUp(e));
+        
+        // --- Lock pointer on canvas click when in game mode ---
+        this.domElement.addEventListener('click', () => {
+            if (this.currentControlType === 'game' && !this.pointerLock.isLocked) {
+                this.pointerLock.lock();
+            }
+        });
     }
 
     onPointerDown(e) {
-        if (this.transform.dragging || this.pointerLock.isLocked) return;
+        if (this.editor.isPlaying || this.transform.dragging) return;
         if (e.button !== 0 || e.target.closest('.vs-viewport-tools, .dropdown, .vs-btn, .vs-tree-item, .viewcube-container')) return;
 
         const rect = this.domElement.getBoundingClientRect();
@@ -159,96 +161,85 @@ export default class ControlsManager {
 
         let hit = null;
         for (const i of intersects) {
-            // Пропускаем все вспомогательные объекты сразу
-            if (i.object.userData.isHelper || i.object.isGridHelper) {
-                continue;
-            }
-
-            // Находим самый верхний родительский объект в сцене
+            if (i.object.userData.isHelper || i.object.isGridHelper) continue;
             let topLevelParent = i.object;
             while (topLevelParent.parent && topLevelParent.parent !== this.objectManager.scene) {
                 topLevelParent = topLevelParent.parent;
             }
-
-            if (topLevelParent.isTransformControls) {
-                continue;
-            }
-
+            if (topLevelParent.isTransformControls) continue;
             hit = topLevelParent;
             break;
         }
-
         this.objectManager.setSelected(hit);
     }
 
     onKeyDown(e) {
-        // Игнорируем, если ввод текста
+        // In play mode, handle movement first regardless of focused inputs
+        if (this.editor.isPlaying) {
+            const code = e.code;
+            switch (code) {
+                case 'KeyW': e.preventDefault(); this.moveState.forward = true; break;
+                case 'KeyS': e.preventDefault(); this.moveState.backward = true; break;
+                case 'KeyA': e.preventDefault(); this.moveState.left = true; break;
+                case 'KeyD': e.preventDefault(); this.moveState.right = true; break;
+                case 'Space': e.preventDefault(); this.moveState.jump = true; break;
+                case 'ShiftLeft':
+                case 'ShiftRight': e.preventDefault(); this.moveState.run = true; break;
+            }
+            return;
+        }
+
         const activeEl = document.activeElement;
         if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA' || activeEl.isContentEditable)) {
             return;
         }
 
-        // --- Глобальные горячие клавиши (Undo/Redo) ---
         if (e.ctrlKey) {
             switch (e.key.toLowerCase()) {
-                case 'z':
-                    e.preventDefault();
-                    this.editor.undo && this.editor.undo();
-                    break;
-                case 'y':
-                    e.preventDefault();
-                    this.editor.redo && this.editor.redo();
-                    break;
+                case 'z': e.preventDefault(); this.editor.undo && this.editor.undo(); break;
+                case 'y': e.preventDefault(); this.editor.redo && this.editor.redo(); break;
             }
             return;
         }
 
-        // Если pointer lock активен — используем WASD для движения, не переключаем гизмо
-        if (this.pointerLock.isLocked) {
-            switch (e.key.toLowerCase()) {
-                case 'w': this.moveState.forward = 1; break;
-                case 's': this.moveState.forward = -1; break;
-                case 'a': this.moveState.right = -1; break;
-                case 'd': this.moveState.right = 1; break;
-            }
-            return;
-        }
-
-        // Горячие клавиши для переключения гизмо: W/E/R
         const key = e.key.toLowerCase();
         if (key === 'w' || key === 'e' || key === 'r') {
             e.preventDefault();
             if (key === 'w') this.setTransformMode('translate');
             if (key === 'e') this.setTransformMode('rotate');
             if (key === 'r') this.setTransformMode('scale');
-            return;
         }
-
-        // Прочие клавиши — нет обработки
     }
 
     onKeyUp(e) {
-        if (this.pointerLock.isLocked) {
-            switch (e.key.toLowerCase()) {
-                case 'w': case 's': this.moveState.forward = 0; break;
-                case 'a': case 'd': this.moveState.right = 0; break;
+        // --- Handle Player Movement in Game Mode ---
+        if (this.editor.isPlaying) {
+            const code = e.code;
+            switch (code) {
+                case 'KeyW': e.preventDefault(); this.moveState.forward = false; break;
+                case 'KeyS': e.preventDefault(); this.moveState.backward = false; break;
+                case 'KeyA': e.preventDefault(); this.moveState.left = false; break;
+                case 'KeyD': e.preventDefault(); this.moveState.right = false; break;
+                case 'Space': e.preventDefault(); this.moveState.jump = false; break;
+                case 'ShiftLeft':
+                case 'ShiftRight': e.preventDefault(); this.moveState.run = false; break;
             }
         }
     }
 
-    /**
-     * Переключает тип управления (orbit / game), включает/выключает трансформконтролсы.
-     */
     setControlType(type) {
+        this.currentControlType = type;
         if (type === 'orbit') {
-            try { this.pointerLock.unlock(); } catch(e) {}
+            if(this.pointerLock.isLocked) this.pointerLock.unlock();
             this.orbit.enabled = true;
             this.transform.enabled = true;
+            document.body.style.cursor = 'auto';
         } else if (type === 'game') {
             this.orbit.enabled = false;
             this.transform.enabled = false;
             this.objectManager.setSelected(null);
-            try { this.pointerLock.lock(); } catch(e) {}
+            this.pointerLock.lock();
+            document.body.style.cursor = 'crosshair';
         }
     }
 
@@ -281,16 +272,10 @@ export default class ControlsManager {
             item.el.classList.toggle('active', isActive);
         });
     }
-
-    update(delta) {
-        if (this.pointerLock.isLocked) {
-            const moveDirection = new THREE.Vector3(this.moveState.right, 0, this.moveState.forward).normalize();
-            // PointerLockControls ожидает moveRight/moveForward - мы используем их через небольшую хитрость
-            try {
-                this.pointerLock.moveRight(moveDirection.x * this.moveSpeed * delta);
-                this.pointerLock.moveForward(-moveDirection.z * this.moveSpeed * delta);
-            } catch (e) { /* some builds may not have move* methods */ }
-        } else {
+	
+	  update(delta) {
+        // Only update orbit controls if they are enabled and not in play mode
+        if (this.currentControlType === 'orbit' && !this.editor.isPlaying) {
             this.orbit.update();
         }
     }

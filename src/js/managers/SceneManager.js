@@ -26,6 +26,8 @@ export default class SceneManager {
         const rect = container.getBoundingClientRect();
         this.camera = new THREE.PerspectiveCamera(60, rect.width / rect.height, 0.1, 40000);
         this.camera.position.set(6, 4, 8);
+        // Ensure initial size matches container (after camera exists)
+        this.resize(rect.width, rect.height);
         
         this.setupBaseScene();
     }

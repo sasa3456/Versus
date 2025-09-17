@@ -1,7 +1,7 @@
 {
-  "name": "versus-editor",
-  "version": "1.0.0",
-  "description": "3D Game Editor with Electron and WebGL",
+  "name": "Versus",
+  "version": "0.0.1",
+  "description": "3D Game Editor",
   "main": "main.js",
   "scripts": {
     "start": "electron ."
@@ -13,6 +13,7 @@
     "electron": "^28.2.3"
   },
   "dependencies": {
+    "chokidar": "^4.0.3",
     "three": "^0.162.0"
   }
 }

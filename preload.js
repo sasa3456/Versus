@@ -1,35 +1,40 @@
+// preload.js
+
 const { contextBridge, ipcRenderer } = require('electron');
+const path = require('path'); // <-- Import the 'path' module
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // Project management
+  // --- Game Window Methods ---
+  playGame: (sceneData) => ipcRenderer.send('game:play', sceneData),
+  onLoadScene: (callback) => ipcRenderer.on('scene:load', (_event, value) => callback(value)),
+
+  // --- Asset Watcher ---
+  projectOpened: (projectPath) => ipcRenderer.send('project:opened', projectPath),
+  onAssetChange: (callback) => ipcRenderer.on('asset-changed', (_event, value) => callback(value)),
+
+  // --- Project Management ---
   selectDirectory: () => ipcRenderer.invoke('dialog:select-directory'),
   createProject: (projectPath, projectName) => ipcRenderer.invoke('project:create', projectPath, projectName),
   openProject: () => ipcRenderer.invoke('project:open'),
   saveProject: (filePath, content) => ipcRenderer.invoke('project:save', filePath, content),
 
+  // --- File System API ---
+  getAssetsTree: (projectPath) => ipcRenderer.invoke('fs:get-assets-tree', projectPath),
+  readDir: (dirPath) => ipcRenderer.invoke('fs:read-dir', dirPath),
+  importAsset: (projectPath, sourceFilePath) => ipcRenderer.invoke('fs:import-asset', projectPath, sourceFilePath),
+  importAssetToPath: (destFolderPath, sourceFilePath) => ipcRenderer.invoke('fs:import-asset-to-path', destFolderPath, sourceFilePath),
+
+  // --- Window & App Control ---
   closeWindow: () => ipcRenderer.send('window:close'),
-  // Graceful close handling
   onCloseRequest: (callback) => ipcRenderer.on('on-close-request', callback),
   onSaveAndQuit: (callback) => ipcRenderer.on('save-and-quit', callback),
   confirmClose: () => ipcRenderer.invoke('confirm-close'),
   quitAfterSave: () => ipcRenderer.send('quit-after-save'),
-});
-
-// Этот код можно оставить, если он вам нужен
-window.addEventListener('DOMContentLoaded', () => {
-  const replaceText = (selector, text) => {
-    const element = document.getElementById(selector)
-    if (element) element.innerText = text
-  }
-
-  for (const dependency of ['chrome', 'node', 'electron']) {
-    replaceText(`${dependency}-version`, process.versions[dependency])
-  }
-
-  const closeButton = document.getElementById('close-button');
-  if (closeButton) {
-    closeButton.addEventListener('click', () => {
-      window.electronAPI.closeWindow();
-    });
+  
+  // --- NEW: Expose specific path functions ---
+  path: {
+    relative: (from, to) => path.relative(from, to),
+    sep: path.sep,
+    join: (...args) => path.join(...args)
   }
 });
